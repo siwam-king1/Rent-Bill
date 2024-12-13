@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Shareable Rental Bill Generator</title>
+  <style>
+  
+    /* General Styles */
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f8f9fa;
+      color: #333;
+    }
+
+    .container {
+      max-width: 600px;
+      margin: 50px auto;
+      padding: 20px;
+      background: white;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+      border-radius: 10px;
+    }
+
+    h1 {
+      text-align: center;
+      color: #007bff;
+    }
+
+    form {
+      display: flex;
+      flex-direction: column;
+    }
+
+    label {
+      margin-top: 10px;
+      font-weight: bold;
+    }
+
+    select, input {
+      padding: 8px;
+      margin-top: 5px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+    }
+
+    button {
+      margin-top: 20px;
+      padding: 10px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+    }
+
+    .result {
+      margin-top: 20px;
+      padding: 10px;
+      background: #e9ecef;
+      border: 1px solid #ced4da;
+      border-radius: 5px;
+      display: none;
+    }
+
+    .receipt {
+      padding: 20px;
+      background: #fefefe;
+      border: 1px solid #ddd;
+      font-family: "Courier New", Courier, monospace;
+    }
+
+    .receipt-header {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .receipt-header h2 {
+      margin: 0;
+    }
+
+    .receipt-section {
+      margin-bottom: 15px;
+    }
+
+    .receipt-section h4 {
+      margin-bottom: 10px;
+      border-bottom: 1px solid #ddd;
+      padding-bottom: 5px;
+    }
+
+    .receipt-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .receipt-table th, .receipt-table td {
+      padding: 8px;
+      text-align: left;
+    }
+
+    .receipt-table th {
+      background-color: #007bff;
+      color: white;
+    }
+
+    .receipt-total {
+      text-align: right;
+      margin-top: 15px;
+      font-size: 1.2em;
+      font-weight: bold;
+    }
+
+    .actions {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 20px;
+    }
+
+    .actions button {
+      width: 48%;
+    }
+
+
+
+
+/* Navigation Bar */
+.navbar {
+  background-color: #007bff;
+  padding: 10px 20px;
+}
+
+.navbar ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  justify-content: space-around;
+}
+
+.navbar li {
+  margin: 0 10px;
+}
+
+.navbar a {
+  color: white;
+  text-decoration: none;
+  font-size: 16px;
+}
+
+.navbar a:hover {
+  text-decoration: underline;
+}
+
+/* Section Styling */
+.section {
+  padding: 20px;
+  margin: 20px 0;
+  background-color: #f8f9fa;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+}
+
+/* Templates */
+.template-classic {
+  font-family: "Times New Roman", Times, serif;
+  background-color: #f5f5dc;
+  color: #333;
+}
+
+.template-modern {
+  font-family: "Arial", sans-serif;
+  background-color: #f0f8ff;
+  color: #000;
+}
+</style>
+</head>
+<body>
+  <div class="container">
+    <h1>Rental Bill Generator</h1>
+    <form id="billForm">
+      <label for="customerName">Customer Name:</label>
+      <input type="text" id="customerName" placeholder="Enter customer name" required>
+
+      <label for="month">Select Month:</label>
+      <select id="month" required>
+        <option value="" disabled selected>Select a month</option>
+        <option value="January">January</option>
+        <option value="February">February</option>
+        <!-- Other months -->
+      </select>
+
+      <label for="previousUnit">Previous Unit:</label>
+      <input type="number" id="previousUnit" required>
+
+      <label for="currentUnit">Current Unit:</label>
+      <input type="number" id="currentUnit" required>
+      
+      <label for="unitCost">Cost per Unit (₹):</label>
+      <input type="number" id="unitCost" value="10" required>
+
+      <div>
+        <input type="checkbox" id="enablePump"> Enable Pump Calculation
+      </div>
+      <div id="pumpFields" style="display:none;">
+        <label>Previous Pump Unit: <input type="number" id="previousPumpUnit" placeholder="Previous Pump Unit"></label><br>
+        <label>Current Pump Unit: <input type="number" id="currentPumpUnit" placeholder="Current Pump Unit"></label><br>
+        <label>Pump Members: <input type="number" id="pumpMembers" placeholder="Number of Pump Members"></label><br>
+      </div>
+
+      <div>
+        <input type="checkbox" id="enableAdditionalRoom"> Enable Additional Room
+      </div>
+      <div id="additionalRoomFields" style="display:none;">
+        <label>Room Name: <input type="text" id="additionalRoomName" placeholder="Room Name"></label><br>
+        <label>Previous Unit: <input type="number" id="additionalPreviousUnit" placeholder="Previous Unit"></label><br>
+        <label>Current Unit: <input type="number" id="additionalCurrentUnit" placeholder="Current Unit"></label><br>
+      </div>
+
+      <label for="rent">Rent (₹):</label>
+      <input type="number" id="rent" required>
+
+      <label for="due">Previous Due (₹):</label>
+      <input type="number" id="due" placeholder="0">
+
+      <label for="advance">Previous Advance (₹):</label>
+      <input type="number" id="advance" placeholder="0">
+
+      <button type="button" onclick="generateBill()">Generate Bill</button>
+    </form>
+
+    <div id="billResult" class="result">
+      <div id="billContent" class="receipt">
+        <div class="receipt-header">
+          <h2>Rental Bill</h2>
+          <p id="receiptMonth"></p>
+          <p id="receiptCustomerName"></p>
+        </div>
+
+        <div class="receipt-section">
+          <h4>Calculation Details</h4>
+          <p id="calculationDetails"></p>
+        </div>
+
+        <div class="receipt-section">
+          <h4>Bill Breakdown</h4>
+          <table class="receipt-table" id="breakdownTable"></table>
+        </div>
+
+        <div class="receipt-total">
+          Total: ₹<span id="receiptTotal"></span>
+        </div>
+      </div>
+      <div class="actions">
+        <button onclick="downloadBill()">Download Bill as Image</button>
+        <button onclick="shareBill()">Share Bill</button>
+      </div>
+    </div>
+  </div>
+  <script>
+      
+      
+    function generateBill() {
+  const customerName = document.getElementById("customerName").value;
+  const month = document.getElementById("month").value;
+  const previousUnit = parseFloat(document.getElementById("previousUnit").value);
+  const currentUnit = parseFloat(document.getElementById("currentUnit").value);
+  const rent = parseFloat(document.getElementById("rent").value);
+  const due = parseFloat(document.getElementById("due").value) || 0;
+  const advance = parseFloat(document.getElementById("advance").value) || 0;
+
+  // Pump Details
+  const enablePump = document.getElementById("enablePump").checked;
+  let pumpUnitCharge = 0;
+  let pumpDetails = "";
+
+  if (enablePump) {
+    const previousPumpUnit = parseFloat(document.getElementById("previousPumpUnit").value) || 0;
+    const currentPumpUnit = parseFloat(document.getElementById("currentPumpUnit").value) || 0;
+    const pumpMembers = parseFloat(document.getElementById("pumpMembers").value) || 1;
+
+    pumpUnitCharge = (((currentPumpUnit - previousPumpUnit) / pumpMembers)) * 10;
+    pumpDetails = `
+      Pump Unit Charge: ((${currentPumpUnit} - ${previousPumpUnit}) / ${pumpMembers}) × 10 = ₹${pumpUnitCharge.toFixed(2)}<br>
+    `;
+  }
+
+  // Additional Room Details
+  const enableAdditionalRoom = document.getElementById("enableAdditionalRoom").checked;
+  let additionalRoomCharge = 0;
+  let additionalRoomDetails = "";
+  let additionalRoomBreakdown = "";
+
+  if (enableAdditionalRoom) {
+    const additionalRoomName = document.getElementById("additionalRoomName").value || "Additional Room";
+    const additionalPreviousUnit = parseFloat(document.getElementById("additionalPreviousUnit").value) || 0;
+    const additionalCurrentUnit = parseFloat(document.getElementById("additionalCurrentUnit").value) || 0;
+
+    additionalRoomCharge = (additionalCurrentUnit - additionalPreviousUnit) * 10;
+
+    additionalRoomDetails = `
+      <tr><td>${additionalRoomName} Unit Charge</td><td>${additionalRoomCharge.toFixed(2)}</td></tr>
+    `;
+
+    additionalRoomBreakdown = `
+      ${additionalRoomName}: (${additionalCurrentUnit} - ${additionalPreviousUnit}) × 10 = ₹${additionalRoomCharge.toFixed(2)}<br>
+    `;
+  }
+
+  // Calculate Room Charge
+  const roomUnitCharge = (currentUnit - previousUnit) * 10;
+
+  // Calculate Total
+  const total = roomUnitCharge + pumpUnitCharge + additionalRoomCharge + rent + due - advance;
+
+  // Update Bill Details
+  document.getElementById("receiptMonth").innerText = `Month: ${month}`;
+  document.getElementById("receiptCustomerName").innerText = `Customer: ${customerName}`;
+  document.getElementById("calculationDetails").innerHTML = `
+    Room Unit Charge: (${currentUnit} - ${previousUnit}) × 10 = ₹${roomUnitCharge.toFixed(2)}<br>
+    ${pumpDetails ? pumpDetails : ""}
+    ${additionalRoomBreakdown ? additionalRoomBreakdown : ""}
+  `;
+
+  document.getElementById("breakdownTable").innerHTML = `
+    <tr><th>Description</th><th>Amount (₹)</th></tr>
+    <tr><td>Room Unit Charge</td><td>${roomUnitCharge.toFixed(2)}</td></tr>
+    ${enablePump ? `<tr><td>Pump Unit Charge</td><td>${pumpUnitCharge.toFixed(2)}</td></tr>` : ""}
+    ${additionalRoomDetails}
+    <tr><td>Rent</td><td>${rent.toFixed(2)}</td></tr>
+    <tr><td>Previous Due</td><td>${due.toFixed(2)}</td></tr>
+    <tr><td>Previous Advance</td><td>- ${advance.toFixed(2)}</td></tr>
+  `;
+
+  document.getElementById("receiptTotal").innerText = total.toFixed(2);
+  document.getElementById("billResult").style.display = "block";
+}
+
+
+    function downloadBill() {
+  const billContent = document.getElementById("billContent");
+
+  // Temporarily remove the responsive styles by setting fixed width and height
+  const originalWidth = billContent.style.width;
+  const originalHeight = billContent.style.height;
+  
+  billContent.style.width = "600px";  // Fixed width
+  billContent.style.height = "auto";  // Adjust height accordingly
+
+  html2canvas(billContent).then(canvas => {
+    const link = document.createElement("a");
+    link.download = "Rental_Bill.png";
+    link.href = canvas.toDataURL("image/png");
+    link.click();
+
+    // Restore original dimensions after capturing the canvas
+    billContent.style.width = originalWidth;
+    billContent.style.height = originalHeight;
+  });
+}
+
+function toggleAdditionalRoom() {
+  const container = document.getElementById("additionalRoomContainer");
+  const isChecked = document.getElementById("enableAdditionalRoom").checked;
+  container.style.display = isChecked ? "block" : "none";
+}
+
+    function shareBill() {
+      const billContent = document.getElementById("billContent");
+      html2canvas(billContent).then(canvas => {
+        const image = canvas.toDataURL("image/png");
+        const shareData = {
+          title: 'Rental Bill',
+          text: 'Here is the generated rental bill:',
+          files: [
+            new File([image], 'Rental_Bill.png', { type: 'image/png' })
+          ]
+        };
+
+        if (navigator.canShare && navigator.canShare(shareData)) {
+          navigator.share(shareData).catch(error => console.error('Sharing failed:', error));
+        } else {
+          alert('Sharing not supported. Use the download option.');
+        }
+      });
+    }
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+
+</body>
+</html>
