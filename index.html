@@ -57,9 +57,6 @@
         <label>Current Unit: <input type="number" id="additionalCurrentUnit" placeholder="Current Unit"></label><br>
       </div>
 
-      <label for="maintenance">Maintenance Charge (₹):</label>
-      <input type="number" id="maintenance" value="0" required>
-
       <label for="rent">Rent (₹):</label>
       <input type="number" id="rent" required>
 
@@ -68,6 +65,10 @@
 
       <label for="advance">Previous Advance (₹):</label>
       <input type="number" id="advance" placeholder="0">
+
+      <!-- New Extra Charge Feature -->
+      <label for="extraCharge">Maintenance/Service Charge (₹):</label>
+      <input type="number" id="extraCharge" value="0">
 
       <button type="button" onclick="generateBill()">Generate Bill</button>
     </form>
@@ -94,40 +95,71 @@
           Total: ₹<span id="receiptTotal"></span>
         </div>
       </div>
+      <div class="actions">
+        <button onclick="downloadBill()">Download Bill as Image</button>
+        <button onclick="shareBill()">Share Bill</button>
+      </div>
     </div>
   </div>
+
   <script>
+    function togglePump() {
+      document.getElementById("pumpFields").style.display = document.getElementById("enablePump").checked ? "block" : "none";
+    }
+
+    function toggleAdditionalRoom() {
+      document.getElementById("additionalRoomFields").style.display = document.getElementById("enableAdditionalRoom").checked ? "block" : "none";
+    }
+
     function generateBill() {
-      const maintenance = parseFloat(document.getElementById("maintenance").value) || 0;
-      const rent = parseFloat(document.getElementById("rent").value);
-      const due = parseFloat(document.getElementById("due").value) || 0;
-      const advance = parseFloat(document.getElementById("advance").value) || 0;
+      const customerName = document.getElementById("customerName").value;
+      const month = document.getElementById("month").value;
       const previousUnit = parseFloat(document.getElementById("previousUnit").value);
       const currentUnit = parseFloat(document.getElementById("currentUnit").value);
       const unitCost = parseFloat(document.getElementById("unitCost").value);
+      const rent = parseFloat(document.getElementById("rent").value);
+      const due = parseFloat(document.getElementById("due").value) || 0;
+      const advance = parseFloat(document.getElementById("advance").value) || 0;
+      const extraCharge = parseFloat(document.getElementById("extraCharge").value) || 0;
 
       const roomUnitCharge = (currentUnit - previousUnit) * unitCost;
-      const total = roomUnitCharge + maintenance + rent + due - advance;
+      let pumpCharge = 0;
 
-      document.getElementById("calculationDetails").innerHTML = `
-        Room Unit Charge: (\${currentUnit} - \${previousUnit}) × \${unitCost} = ₹\${roomUnitCharge.toFixed(2)}<br>
-        Maintenance Charge: ₹\${maintenance.toFixed(2)}<br>
-      `;
+      if (document.getElementById("enablePump").checked) {
+        const prevPump = parseFloat(document.getElementById("previousPumpUnit").value);
+        const currPump = parseFloat(document.getElementById("currentPumpUnit").value);
+        const members = parseFloat(document.getElementById("pumpMembers").value) || 1;
+        pumpCharge = ((currPump - prevPump) / members) * unitCost;
+      }
+
+      let additionalRoomCharge = 0;
+      if (document.getElementById("enableAdditionalRoom").checked) {
+        const prevAddUnit = parseFloat(document.getElementById("additionalPreviousUnit").value);
+        const currAddUnit = parseFloat(document.getElementById("additionalCurrentUnit").value);
+        additionalRoomCharge = (currAddUnit - prevAddUnit) * unitCost;
+      }
+
+      const total = roomUnitCharge + pumpCharge + additionalRoomCharge + rent + due + extraCharge - advance;
+
+      document.getElementById("receiptMonth").innerText = `Month: ${month}`;
+      document.getElementById("receiptCustomerName").innerText = `Customer: ${customerName}`;
 
       document.getElementById("breakdownTable").innerHTML = `
         <tr><th>Description</th><th>Amount (₹)</th></tr>
-        <tr><td>Room Unit Charge</td><td>\${roomUnitCharge.toFixed(2)}</td></tr>
-        <tr><td>Maintenance</td><td>\${maintenance.toFixed(2)}</td></tr>
-        <tr><td>Rent</td><td>\${rent.toFixed(2)}</td></tr>
-        <tr><td>Previous Due</td><td>\${due.toFixed(2)}</td></tr>
-        <tr><td>Previous Advance</td><td>-\${advance.toFixed(2)}</td></tr>
+        <tr><td>Room Unit Charge</td><td>${roomUnitCharge.toFixed(2)}</td></tr>
+        ${pumpCharge ? `<tr><td>Pump Unit Charge</td><td>${pumpCharge.toFixed(2)}</td></tr>` : ""}
+        ${additionalRoomCharge ? `<tr><td>Additional Room Charge</td><td>${additionalRoomCharge.toFixed(2)}</td></tr>` : ""}
+        <tr><td>Rent</td><td>${rent.toFixed(2)}</td></tr>
+        <tr><td>Previous Due</td><td>${due.toFixed(2)}</td></tr>
+        <tr><td>Maintenance/Service</td><td>${extraCharge.toFixed(2)}</td></tr>
+        <tr><td>Advance Deduction</td><td>- ${advance.toFixed(2)}</td></tr>
       `;
 
       document.getElementById("receiptTotal").innerText = total.toFixed(2);
       document.getElementById("billResult").style.display = "block";
     }
   </script>
+
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 </body>
 </html>
-
-
