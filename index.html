@@ -147,12 +147,20 @@
       document.getElementById("receiptMonth").innerText = `Month: ${month}`;
       document.getElementById("receiptCustomerName").innerText = `Customer: ${customerName}`;
 
-      document.getElementById("calculationDetails").innerText = `Room Unit Charge: ₹${roomUnitCharge.toFixed(2)}, Pump Charge: ₹${pumpCharge.toFixed(2)}, Maintenance: ₹${extraCharge.toFixed(2)}`;
+      document.getElementById("calculationDetails").innerText = `
+        Room Unit Charge: ₹${roomUnitCharge.toFixed(2)},
+        Pump Charge: ₹${pumpCharge.toFixed(2)},
+        Previous Due: ₹${due.toFixed(2)},
+        Advance Deduction: ₹${advance.toFixed(2)},
+        Maintenance: ₹${extraCharge.toFixed(2)}
+      `;
 
       document.getElementById("breakdownTable").innerHTML = `
         <tr><th>Description</th><th>Amount (₹)</th></tr>
         <tr><td>Room Unit Charge</td><td>${roomUnitCharge.toFixed(2)}</td></tr>
+        <tr><td>Pump Charge</td><td>${pumpCharge.toFixed(2)}</td></tr>
         <tr><td>Rent</td><td>${rent.toFixed(2)}</td></tr>
+        <tr><td>Previous Due</td><td>${due.toFixed(2)}</td></tr>
         <tr><td>Maintenance/Service</td><td>${extraCharge.toFixed(2)}</td></tr>
         <tr><td>Advance Deduction</td><td>- ${advance.toFixed(2)}</td></tr>
       `;
