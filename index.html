@@ -3,7 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dynamic Rental Bill Generator</title>
+  <title>Rental Bill Generator</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -56,29 +58,22 @@
       border-radius: 8px;
     }
 
-    .receipt-section {
-      margin-bottom: 15px;
-    }
-
     table {
       width: 100%;
       border-collapse: collapse;
       margin-top: 10px;
     }
 
-    table, th, td {
-      border: 1px solid #ccc;
-    }
-
     th, td {
+      border: 1px solid #ccc;
       padding: 8px;
       text-align: left;
     }
 
-    .receipt-total {
-      text-align: right;
-      font-weight: bold;
-      font-size: 18px;
+    .action-buttons {
+      display: flex;
+      gap: 10px;
+      margin-top: 10px;
     }
   </style>
 </head>
@@ -108,40 +103,11 @@
       <option value="December">December</option>
     </select>
 
-    <label for="previousUnit">Previous Unit:</label>
-    <input type="number" id="previousUnit" placeholder="0">
-
-    <label for="currentUnit">Current Unit:</label>
-    <input type="number" id="currentUnit" placeholder="0">
-
-    <label for="unitCost">Cost per Unit (₹):</label>
-    <input type="number" id="unitCost" value="10">
-
-    <input type="checkbox" id="enablePump" onclick="togglePump()"> Enable Pump Calculation
-    <div id="pumpFields" style="display:none;">
-      <label>Previous Pump Unit:</label>
-      <input type="number" id="previousPumpUnit">
-      <label>Current Pump Unit:</label>
-      <input type="number" id="currentPumpUnit">
-      <label>Pump Members:</label>
-      <input type="number" id="pumpMembers">
-    </div>
-
-    <input type="checkbox" id="enableAdditionalRoom" onclick="toggleAdditionalRoom()"> Enable Additional Room
-    <div id="additionalRoomFields" style="display:none;">
-      <label>Room Name:</label>
-      <input type="text" id="additionalRoomName">
-      <label>Previous Unit:</label>
-      <input type="number" id="additionalPreviousUnit">
-      <label>Current Unit:</label>
-      <input type="number" id="additionalCurrentUnit">
-    </div>
+    <label for="rent">Rent (₹):</label>
+    <input type="number" id="rent">
 
     <label for="maintenanceCharge">Maintenance Charge (₹):</label>
     <input type="number" id="maintenanceCharge">
-
-    <label for="rent">Rent (₹):</label>
-    <input type="number" id="rent" required>
 
     <label for="due">Previous Due (₹):</label>
     <input type="number" id="due">
@@ -155,52 +121,60 @@
   <div id="billResult" class="result" style="display:none;">
     <h2>Generated Bill</h2>
     <div id="billContent"></div>
+
+    <div class="action-buttons">
+      <button onclick="downloadPDF()">Download PDF</button>
+      <button onclick="shareBill()">Share Bill</button>
+    </div>
   </div>
 </div>
 
 <script>
-  function togglePump() {
-    document.getElementById("pumpFields").style.display = document.getElementById("enablePump").checked ? "block" : "none";
-  }
-
-  function toggleAdditionalRoom() {
-    document.getElementById("additionalRoomFields").style.display = document.getElementById("enableAdditionalRoom").checked ? "block" : "none";
-  }
-
   function generateBill() {
     const customerName = document.getElementById("customerName").value;
     const month = document.getElementById("month").value;
-    const previousUnit = parseFloat(document.getElementById("previousUnit").value) || 0;
-    const currentUnit = parseFloat(document.getElementById("currentUnit").value) || 0;
-    const unitCost = parseFloat(document.getElementById("unitCost").value) || 0;
     const rent = parseFloat(document.getElementById("rent").value) || 0;
+    const maintenance = parseFloat(document.getElementById("maintenanceCharge").value) || 0;
     const due = parseFloat(document.getElementById("due").value) || 0;
     const advance = parseFloat(document.getElementById("advance").value) || 0;
-    const maintenance = parseFloat(document.getElementById("maintenanceCharge").value) || 0;
 
     let total = rent + maintenance + due - advance;
     let billContent = `<strong>Customer:</strong> ${customerName}<br><strong>Month:</strong> ${month}<br><hr><table><tr><th>Description</th><th>Amount (₹)</th></tr>`;
 
-    if (previousUnit && currentUnit) {
-      const roomCharge = (currentUnit - previousUnit) * unitCost;
-      billContent += `<tr><td>Room Unit Charge</td><td>${roomCharge.toFixed(2)}</td></tr>`;
-      total += roomCharge;
-    }
+    if (rent) billContent += `<tr><td>Rent</td><td>${rent.toFixed(2)}</td></tr>`;
+    if (maintenance) billContent += `<tr><td>Maintenance Charge</td><td>${maintenance.toFixed(2)}</td></tr>`;
+    if (due) billContent += `<tr><td>Previous Due</td><td>${due.toFixed(2)}</td></tr>`;
+    if (advance) billContent += `<tr><td>Advance Payment</td><td>-${advance.toFixed(2)}</td></tr>`;
 
-    if (document.getElementById("enablePump").checked) {
-      const prevPump = parseFloat(document.getElementById("previousPumpUnit").value);
-      const currPump = parseFloat(document.getElementById("currentPumpUnit").value);
-      const pumpMembers = parseFloat(document.getElementById("pumpMembers").value) || 1;
-      if (prevPump && currPump) {
-        const pumpCharge = ((currPump - prevPump) / pumpMembers) * unitCost;
-        billContent += `<tr><td>Pump Charge</td><td>${pumpCharge.toFixed(2)}</td></tr>`;
-        total += pumpCharge;
-      }
-    }
+    billContent += `<tr><td><strong>Total</strong></td><td><strong>₹${total.toFixed(2)}</strong></td></tr></table>`;
 
-    billContent += `<tr><td>Total</td><td>₹${total.toFixed(2)}</td></tr></table>`;
     document.getElementById("billContent").innerHTML = billContent;
     document.getElementById("billResult").style.display = "block";
+  }
+
+  async function downloadPDF() {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+
+    await html2canvas(document.querySelector("#billContent")).then(canvas => {
+      const imgData = canvas.toDataURL("image/png");
+      doc.addImage(imgData, 'PNG', 10, 10, 190, 0);
+      doc.save('Rental_Bill.pdf');
+    });
+  }
+
+  function shareBill() {
+    const billText = document.getElementById("billContent").innerText;
+
+    if (navigator.share) {
+      navigator.share({
+        title: 'Rental Bill',
+        text: billText
+      }).then(() => console.log('Bill shared successfully!'))
+        .catch((error) => console.log('Error sharing:', error));
+    } else {
+      alert('Sharing is not supported in this browser.');
+    }
   }
 </script>
 
