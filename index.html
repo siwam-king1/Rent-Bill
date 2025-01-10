@@ -43,18 +43,18 @@
         <input type="checkbox" id="enablePump" onclick="togglePump()"> Enable Pump Calculation
       </div>
       <div id="pumpFields" style="display:none;">
-        <label>Previous Pump Unit: <input type="number" id="previousPumpUnit" placeholder="Previous Pump Unit"></label><br>
-        <label>Current Pump Unit: <input type="number" id="currentPumpUnit" placeholder="Current Pump Unit"></label><br>
-        <label>Pump Members: <input type="number" id="pumpMembers" placeholder="Number of Pump Members"></label><br>
+        <label>Previous Pump Unit: <input type="number" id="previousPumpUnit"></label><br>
+        <label>Current Pump Unit: <input type="number" id="currentPumpUnit"></label><br>
+        <label>Pump Members: <input type="number" id="pumpMembers"></label><br>
       </div>
 
       <div>
         <input type="checkbox" id="enableAdditionalRoom" onclick="toggleAdditionalRoom()"> Enable Additional Room
       </div>
       <div id="additionalRoomFields" style="display:none;">
-        <label>Room Name: <input type="text" id="additionalRoomName" placeholder="Room Name"></label><br>
-        <label>Previous Unit: <input type="number" id="additionalPreviousUnit" placeholder="Previous Unit"></label><br>
-        <label>Current Unit: <input type="number" id="additionalCurrentUnit" placeholder="Current Unit"></label><br>
+        <label>Room Name: <input type="text" id="additionalRoomName"></label><br>
+        <label>Previous Unit: <input type="number" id="additionalPreviousUnit"></label><br>
+        <label>Current Unit: <input type="number" id="additionalCurrentUnit"></label><br>
       </div>
 
       <label for="rent">Rent (₹):</label>
@@ -66,9 +66,14 @@
       <label for="advance">Previous Advance (₹):</label>
       <input type="number" id="advance" placeholder="0">
 
-      <!-- New Extra Charge Feature -->
       <label for="extraCharge">Maintenance/Service Charge (₹):</label>
       <input type="number" id="extraCharge" value="0">
+
+      <!-- Checkbox to Show/Hide Calculation Details -->
+      <div>
+        <input type="checkbox" id="showCalculation" onclick="toggleCalculation()" checked>
+        Show Calculation Details
+      </div>
 
       <button type="button" onclick="generateBill()">Generate Bill</button>
     </form>
@@ -81,7 +86,8 @@
           <p id="receiptCustomerName"></p>
         </div>
 
-        <div class="receipt-section">
+        <!-- Calculation Details Section -->
+        <div id="calculationSection" class="receipt-section">
           <h4>Calculation Details</h4>
           <p id="calculationDetails"></p>
         </div>
@@ -111,6 +117,10 @@
       document.getElementById("additionalRoomFields").style.display = document.getElementById("enableAdditionalRoom").checked ? "block" : "none";
     }
 
+    function toggleCalculation() {
+      document.getElementById("calculationSection").style.display = document.getElementById("showCalculation").checked ? "block" : "none";
+    }
+
     function generateBill() {
       const customerName = document.getElementById("customerName").value;
       const month = document.getElementById("month").value;
@@ -132,25 +142,17 @@
         pumpCharge = ((currPump - prevPump) / members) * unitCost;
       }
 
-      let additionalRoomCharge = 0;
-      if (document.getElementById("enableAdditionalRoom").checked) {
-        const prevAddUnit = parseFloat(document.getElementById("additionalPreviousUnit").value);
-        const currAddUnit = parseFloat(document.getElementById("additionalCurrentUnit").value);
-        additionalRoomCharge = (currAddUnit - prevAddUnit) * unitCost;
-      }
-
-      const total = roomUnitCharge + pumpCharge + additionalRoomCharge + rent + due + extraCharge - advance;
+      const total = roomUnitCharge + pumpCharge + rent + due + extraCharge - advance;
 
       document.getElementById("receiptMonth").innerText = `Month: ${month}`;
       document.getElementById("receiptCustomerName").innerText = `Customer: ${customerName}`;
 
+      document.getElementById("calculationDetails").innerText = `Room Unit Charge: ₹${roomUnitCharge.toFixed(2)}, Pump Charge: ₹${pumpCharge.toFixed(2)}, Maintenance: ₹${extraCharge.toFixed(2)}`;
+
       document.getElementById("breakdownTable").innerHTML = `
         <tr><th>Description</th><th>Amount (₹)</th></tr>
         <tr><td>Room Unit Charge</td><td>${roomUnitCharge.toFixed(2)}</td></tr>
-        ${pumpCharge ? `<tr><td>Pump Unit Charge</td><td>${pumpCharge.toFixed(2)}</td></tr>` : ""}
-        ${additionalRoomCharge ? `<tr><td>Additional Room Charge</td><td>${additionalRoomCharge.toFixed(2)}</td></tr>` : ""}
         <tr><td>Rent</td><td>${rent.toFixed(2)}</td></tr>
-        <tr><td>Previous Due</td><td>${due.toFixed(2)}</td></tr>
         <tr><td>Maintenance/Service</td><td>${extraCharge.toFixed(2)}</td></tr>
         <tr><td>Advance Deduction</td><td>- ${advance.toFixed(2)}</td></tr>
       `;
@@ -159,7 +161,5 @@
       document.getElementById("billResult").style.display = "block";
     }
   </script>
-
-  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 </body>
 </html>
