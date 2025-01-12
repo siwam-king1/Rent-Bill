@@ -51,7 +51,7 @@
         }
 
         .bill-container {
-            background-color: #fff;
+            background-color: #e0f7fa; /* Sky Blue Theme */
             padding: 20px;
             border: 2px solid #333;
             margin-top: 30px;
@@ -109,6 +109,15 @@
         .optional label {
             margin-left: 10px;
         }
+
+        .calculation-details {
+            display: none;
+            margin-top: 20px;
+        }
+
+        .show-calculations:checked + .calculation-details {
+            display: block;
+        }
     </style>
 </head>
 <body>
@@ -140,13 +149,15 @@
 
         <h3>Pump Charges</h3>
         <div class="optional">
-            <input type="checkbox" id="include_pump">
+            <input type="checkbox" id="include_pump" class="show-calculations">
             <label for="include_pump">Include Pump Charges</label>
         </div>
-        <input type="number" id="pump_prev" placeholder="Previous Reading" disabled>
-        <input type="number" id="pump_curr" placeholder="Current Reading" disabled>
-        <input type="number" id="pump_unit_charge" placeholder="Unit Charge (₹)" disabled>
-        <input type="number" id="num_people" placeholder="Number of People Sharing" disabled>
+        <div class="calculation-details">
+            <input type="number" id="pump_prev" placeholder="Previous Reading">
+            <input type="number" id="pump_curr" placeholder="Current Reading">
+            <input type="number" id="pump_unit_charge" placeholder="Unit Charge (₹)">
+            <input type="number" id="num_people" placeholder="Number of People Sharing">
+        </div>
 
         <h3>Rent & Adjustments</h3>
         <input type="number" id="rent_amount" placeholder="Rent (₹)">
@@ -155,13 +166,15 @@
 
         <h3>Additional Room (Optional)</h3>
         <div class="optional">
-            <input type="checkbox" id="include_room">
+            <input type="checkbox" id="include_room" class="show-calculations">
             <label for="include_room">Include Additional Room Charges</label>
         </div>
-        <input type="text" id="room_name" placeholder="Room Name (Optional)" disabled>
-        <input type="number" id="room_prev" placeholder="Room Previous Reading" disabled>
-        <input type="number" id="room_curr" placeholder="Room Current Reading" disabled>
-        <input type="number" id="room_unit_charge" placeholder="Room Unit Charge (₹)" disabled>
+        <div class="calculation-details">
+            <input type="text" id="room_name" placeholder="Room Name (Optional)">
+            <input type="number" id="room_prev" placeholder="Room Previous Reading">
+            <input type="number" id="room_curr" placeholder="Room Current Reading">
+            <input type="number" id="room_unit_charge" placeholder="Room Unit Charge (₹)">
+        </div>
 
         <button onclick="generateBill()">Generate Bill</button>
         <button onclick="downloadPDF()">Download PDF</button>
@@ -252,26 +265,25 @@
                 roomBill = (roomCurr - roomPrev) * roomUnitCharge;
             }
 
-            const unitCharges = elecBill + pumpBill + roomBill;
-
             const rentAmount = parseFloat(document.getElementById('rent_amount').value);
             const prevDue = parseFloat(document.getElementById('prev_due').value);
             const prevAdvance = parseFloat(document.getElementById('prev_advance').value);
-            const totalBill = rentAmount + unitCharges + prevDue - prevAdvance;
 
-            // Displaying all values
+            const unitCharges = elecBill + pumpBill + roomBill;
+            const totalBill = unitCharges + rentAmount + prevDue - prevAdvance;
+
             document.getElementById('bill_tenant').textContent = tenantName;
             document.getElementById('bill_month').textContent = billingMonth;
 
-            document.getElementById('elec_calc').textContent = `(${elecCurr} - ${elecPrev}) × ₹${elecUnitCharge} = ₹${elecBill.toFixed(2)}`;
-            document.getElementById('pump_calc').textContent = pumpBill > 0 ? `(${pumpCurr} - ${pumpPrev}) × ₹${pumpUnitCharge} ÷ ${numPeople} = ₹${pumpBill.toFixed(2)}` : 'N/A';
-            document.getElementById('room_calc').textContent = roomBill > 0 ? `(${roomCurr} - ${roomPrev}) × ₹${roomUnitCharge} = ₹${roomBill.toFixed(2)}` : 'N/A';
+            document.getElementById('elec_calc').textContent = `(${elecCurr} - ${elecPrev}) × ${elecUnitCharge} = ₹${elecBill.toFixed(2)}`;
+            document.getElementById('pump_calc').textContent = `(${pumpCurr} - ${pumpPrev}) × ${pumpUnitCharge} / ${numPeople} = ₹${pumpBill.toFixed(2)}`;
+            document.getElementById('room_calc').textContent = `(${roomCurr} - ${roomPrev}) × ${roomUnitCharge} = ₹${roomBill.toFixed(2)}`;
 
-            document.getElementById('unit_amount').textContent = unitCharges.toFixed(2);
-            document.getElementById('rent_display').textContent = rentAmount.toFixed(2);
-            document.getElementById('due_display').textContent = prevDue.toFixed(2);
-            document.getElementById('advance_display').textContent = prevAdvance.toFixed(2);
-            document.getElementById('total_amount').textContent = totalBill.toFixed(2);
+            document.getElementById('unit_amount').textContent = `₹${unitCharges.toFixed(2)}`;
+            document.getElementById('rent_display').textContent = `₹${rentAmount.toFixed(2)}`;
+            document.getElementById('due_display').textContent = `₹${prevDue.toFixed(2)}`;
+            document.getElementById('advance_display').textContent = `₹${prevAdvance.toFixed(2)}`;
+            document.getElementById('total_amount').textContent = `₹${totalBill.toFixed(2)}`;
 
             document.getElementById('bill').style.display = 'block';
         }
