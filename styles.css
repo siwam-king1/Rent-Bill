@@ -191,3 +191,30 @@ table .total {
         padding: 8px;
     }
 }
+
+/* Changes for Calculation Details and Bill Breakdown */
+.calculation-details,
+.bill-breakdown {
+    font-family: 'Arial', sans-serif;
+    font-size: 16px;
+    color: #0288d1; /* Sky Blue */
+    margin-bottom: 10px;
+}
+
+.calculation-details span,
+.bill-breakdown span {
+    font-size: 16px;
+    color: #333; /* Darker text for values */
+    font-weight: bold;
+}
+
+.calculation-details,
+.bill-breakdown {
+    display: block;
+    margin-top: 10px;
+}
+
+.calculation-details,
+.bill-breakdown {
+    margin-top: 10px;
+}
