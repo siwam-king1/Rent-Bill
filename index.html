@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="styles.css">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.2/html2pdf.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/0.4.1/html2canvas.min.js"></script>
 </head>
 <body>
 
@@ -60,8 +61,14 @@
         <input type="number" id="room_curr" placeholder="Room Current Reading" disabled>
         <input type="number" id="room_unit_charge" placeholder="Room Unit Charge (₹)" disabled>
 
+        <div>
+            <input type="checkbox" id="show_calculation" checked>
+            <label for="show_calculation">Show Calculation Details</label>
+        </div>
+
         <button onclick="generateBill()">Generate Bill</button>
         <button onclick="downloadPDF()">Download PDF</button>
+        <button onclick="shareBillAsImage()">Share Bill as Image</button>
     </div>
 
     <div id="bill" class="bill-container">
@@ -71,10 +78,12 @@
             <p><strong>Month:</strong> <span id="bill_month"></span></p>
         </div>
 
-        <h3>Calculation Details</h3>
-        <p><strong>Electricity Calculation:</strong> <span id="elec_calc" class="monospace"></span></p>
-        <p><strong>Pump Calculation:</strong> <span id="pump_calc" class="monospace"></span></p>
-        <p><strong>Additional Room Calculation:</strong> <span id="room_calc" class="monospace"></span></p>
+        <div id="calculation_details">
+            <h3>Calculation Details</h3>
+            <p><strong>Electricity Calculation:</strong> <span id="elec_calc" class="monospace"></span></p>
+            <p><strong>Pump Calculation:</strong> <span id="pump_calc" class="monospace"></span></p>
+            <p><strong>Additional Room Calculation:</strong> <span id="room_calc" class="monospace"></span></p>
+        </div>
 
         <h3>Bill Breakdown</h3>
         <table>
@@ -145,12 +154,30 @@
             document.getElementById('advance_display').textContent = `₹${prevAdvance.toFixed(2)}`;
             document.getElementById('total_amount').textContent = `₹${totalBill.toFixed(2)}`;
 
+            // Toggle calculation details visibility
+            if (document.getElementById('show_calculation').checked) {
+                document.getElementById('calculation_details').style.display = 'block';
+            } else {
+                document.getElementById('calculation_details').style.display = 'none';
+            }
+
             document.getElementById('bill').style.display = 'block';
         }
 
         function downloadPDF() {
             const element = document.getElementById('bill');
             html2pdf(element);
+        }
+
+        function shareBillAsImage() {
+            const element = document.getElementById('bill');
+            html2canvas(element).then(canvas => {
+                const image = canvas.toDataURL();
+                const link = document.createElement('a');
+                link.href = image;
+                link.download = 'Rent_Bill.png';
+                link.click();
+            });
         }
     </script>
 </body>
