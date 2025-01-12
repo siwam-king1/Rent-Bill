@@ -48,9 +48,6 @@
             text-align: center;
             margin-bottom: 20px;
         }
-        .bill-header h2 {
-            margin: 0;
-        }
         table {
             width: 100%;
             border-collapse: collapse;
@@ -117,8 +114,7 @@
         </div>
 
         <h3>Calculation Details</h3>
-        <p>Room Unit Charge: <span id="elec_details"></span></p>
-        <p>Pump Unit Charge: <span id="pump_details"></span></p>
+        <p>Unit Charges: <span id="unit_details"></span></p>
 
         <h3>Bill Breakdown</h3>
         <table>
@@ -127,12 +123,8 @@
                 <th>Amount (₹)</th>
             </tr>
             <tr>
-                <td>Room Unit Charge</td>
-                <td id="elec_amount"></td>
-            </tr>
-            <tr>
-                <td>Pump Unit Charge</td>
-                <td id="pump_amount"></td>
+                <td>Unit Charges</td>
+                <td id="unit_amount"></td>
             </tr>
             <tr>
                 <td>Rent</td>
@@ -161,27 +153,25 @@
             const elecPrev = parseFloat(document.getElementById('elec_prev').value);
             const elecCurr = parseFloat(document.getElementById('elec_curr').value);
             const elecUnitCharge = parseFloat(document.getElementById('elec_unit_charge').value);
-            const elecUsage = elecCurr - elecPrev;
-            const elecBill = elecUsage * elecUnitCharge;
+            const elecBill = (elecCurr - elecPrev) * elecUnitCharge;
 
             const pumpPrev = parseFloat(document.getElementById('pump_prev').value);
             const pumpCurr = parseFloat(document.getElementById('pump_curr').value);
             const pumpUnitCharge = parseFloat(document.getElementById('pump_unit_charge').value);
             const numPeople = parseInt(document.getElementById('num_people').value);
-            const pumpUsage = pumpCurr - pumpPrev;
-            const pumpBill = (pumpUsage * pumpUnitCharge) / numPeople;
+            const pumpBill = ((pumpCurr - pumpPrev) * pumpUnitCharge) / numPeople;
+
+            const unitCharges = elecBill + pumpBill;
 
             const rentAmount = parseFloat(document.getElementById('rent_amount').value);
             const prevDue = parseFloat(document.getElementById('prev_due').value);
             const prevAdvance = parseFloat(document.getElementById('prev_advance').value);
-            const totalBill = rentAmount + elecBill + pumpBill + prevDue - prevAdvance;
+            const totalBill = rentAmount + unitCharges + prevDue - prevAdvance;
 
             document.getElementById('bill_tenant').textContent = tenantName;
             document.getElementById('bill_month').textContent = billingMonth;
-            document.getElementById('elec_details').textContent = `(${elecCurr} - ${elecPrev}) × ${elecUnitCharge} = ₹${elecBill.toFixed(2)}`;
-            document.getElementById('pump_details').textContent = `(${pumpCurr} - ${pumpPrev}) ÷ ${numPeople} × ${pumpUnitCharge} = ₹${pumpBill.toFixed(2)}`;
-            document.getElementById('elec_amount').textContent = elecBill.toFixed(2);
-            document.getElementById('pump_amount').textContent = pumpBill.toFixed(2);
+            document.getElementById('unit_details').textContent = `Electricity + Pump = ₹${unitCharges.toFixed(2)}`;
+            document.getElementById('unit_amount').textContent = unitCharges.toFixed(2);
             document.getElementById('rent_display').textContent = rentAmount.toFixed(2);
             document.getElementById('due_display').textContent = prevDue.toFixed(2);
             document.getElementById('advance_display').textContent = prevAdvance.toFixed(2);
