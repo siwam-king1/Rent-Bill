@@ -157,17 +157,12 @@ function generateBill() {
   let calculationDetails = `Room Unit Charge: (${currentUnit} - ${previousUnit}) × ₹${unitCost} = ₹${roomUnitCharge.toFixed(2)}`;
 
   if (document.getElementById("enablePump").checked) {
-    calculationDetails += `\nPump Charge: ((${currPump} - ${prevPump}) × ₹${unitCost}) ÷ ${members} = ₹${pumpCharge.toFixed(2)}`;
+    calculationDetails += `\nPump Unit Charge: (${currPump} - ${prevPump}) × ₹${unitCost} ÷ ${members} = ₹${pumpCharge.toFixed(2)}`;
   }
 
   if (document.getElementById("enableAdditionalRoom").checked) {
-    calculationDetails += `\nAdditional Room Charge: (${addCurrUnit} - ${addPrevUnit}) × ₹${unitCost} = ₹${additionalRoomCharge.toFixed(2)}`;
+    calculationDetails += `\nAdditional Room Unit Charge: (${addCurrUnit} - ${addPrevUnit}) × ₹${unitCost} = ₹${additionalRoomCharge.toFixed(2)}`;
   }
-
-  calculationDetails += `\nRent: ₹${rent.toFixed(2)}`;
-  calculationDetails += `\nPrevious Due: ₹${due.toFixed(2)}`;
-  calculationDetails += `\nMaintenance/Service: ₹${extraCharge.toFixed(2)}`;
-  calculationDetails += `\nAdvance Deduction: -₹${advance.toFixed(2)}`;
 
   document.getElementById("calculationDetails").innerText = calculationDetails;
 
