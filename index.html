@@ -4,37 +4,52 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Rent Bill Generator</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.2/html2pdf.bundle.min.js"></script>
     <style>
         body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
+            font-family: 'Arial', sans-serif;
+            background-color: #f0f0f0;
+            padding: 20px;
             text-align: center;
-            padding: 20px;
         }
-        form, .output {
+        .container {
             background-color: #fff;
-            padding: 20px;
-            display: inline-block;
+            padding: 25px;
             border-radius: 10px;
             box-shadow: 0 0 10px rgba(0,0,0,0.1);
-            width: 80%;
-            max-width: 600px;
+            max-width: 700px;
+            margin: auto;
         }
         input, select, button {
             width: 90%;
             padding: 10px;
-            margin: 8px 0;
+            margin: 10px 0;
             border-radius: 5px;
             border: 1px solid #ccc;
         }
         button {
             background-color: #28a745;
-            color: white;
+            color: #fff;
             border: none;
             cursor: pointer;
         }
         button:hover {
             background-color: #218838;
+        }
+        #bill {
+            margin-top: 20px;
+            padding: 20px;
+            border: 2px solid #000;
+            background-color: #fff;
+            width: 90%;
+            margin: auto;
+        }
+        .bill-header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .bill-header h2 {
+            margin: 0;
         }
         table {
             width: 100%;
@@ -43,11 +58,8 @@
         }
         th, td {
             padding: 10px;
-            border: 1px solid #ccc;
+            border: 1px solid #000;
             text-align: center;
-        }
-        th {
-            background-color: #f2f2f2;
         }
         .total {
             font-weight: bold;
@@ -59,13 +71,10 @@
 
     <h2>Rent Bill Generator</h2>
 
-    <form id="billForm">
-        <label>Tenant Name:</label>
-        <input type="text" id="tenant_name" required><br>
-
-        <label>Billing Month:</label>
-        <select id="billing_month" required>
-            <option value="" disabled selected>Select Month</option>
+    <div class="container">
+        <input type="text" id="tenant_name" placeholder="Tenant Name" required>
+        <select id="billing_month">
+            <option value="" disabled selected>Select Billing Month</option>
             <option>January</option>
             <option>February</option>
             <option>March</option>
@@ -78,45 +87,71 @@
             <option>October</option>
             <option>November</option>
             <option>December</option>
-        </select><br>
+        </select>
 
-        <h3>Room Electricity</h3>
-        <label>Previous Reading:</label>
-        <input type="number" id="elec_prev" step="0.01" required><br>
-
-        <label>Current Reading:</label>
-        <input type="number" id="elec_curr" step="0.01" required><br>
-
-        <label>Unit Charge (₹):</label>
-        <input type="number" id="elec_unit_charge" step="0.01" required><br>
+        <h3>Electricity</h3>
+        <input type="number" id="elec_prev" placeholder="Previous Reading">
+        <input type="number" id="elec_curr" placeholder="Current Reading">
+        <input type="number" id="elec_unit_charge" placeholder="Unit Charge (₹)">
 
         <h3>Pump Charges</h3>
-        <label>Previous Reading:</label>
-        <input type="number" id="pump_prev" step="0.01" required><br>
-
-        <label>Current Reading:</label>
-        <input type="number" id="pump_curr" step="0.01" required><br>
-
-        <label>Unit Charge (₹):</label>
-        <input type="number" id="pump_unit_charge" step="0.01" required><br>
-
-        <label>Number of People Sharing:</label>
-        <input type="number" id="num_people" step="1" required><br>
+        <input type="number" id="pump_prev" placeholder="Previous Reading">
+        <input type="number" id="pump_curr" placeholder="Current Reading">
+        <input type="number" id="pump_unit_charge" placeholder="Unit Charge (₹)">
+        <input type="number" id="num_people" placeholder="Number of People Sharing">
 
         <h3>Rent & Adjustments</h3>
-        <label>Rent Amount (₹):</label>
-        <input type="number" id="rent_amount" required><br>
+        <input type="number" id="rent_amount" placeholder="Rent (₹)">
+        <input type="number" id="prev_due" placeholder="Previous Due (₹)" value="0">
+        <input type="number" id="prev_advance" placeholder="Previous Advance (₹)" value="0">
 
-        <label>Previous Dues (₹):</label>
-        <input type="number" id="prev_due" value="0"><br>
+        <button onclick="generateBill()">Generate Bill</button>
+        <button onclick="downloadPDF()">Download PDF</button>
+    </div>
 
-        <label>Previous Advance (₹):</label>
-        <input type="number" id="prev_advance" value="0"><br>
+    <div id="bill" style="display: none;">
+        <div class="bill-header">
+            <h2>Rent Bill Receipt</h2>
+            <p><strong>Tenant:</strong> <span id="bill_tenant"></span></p>
+            <p><strong>Month:</strong> <span id="bill_month"></span></p>
+        </div>
 
-        <button type="button" onclick="generateBill()">Generate Bill</button>
-    </form>
+        <h3>Calculation Details</h3>
+        <p>Room Unit Charge: <span id="elec_details"></span></p>
+        <p>Pump Unit Charge: <span id="pump_details"></span></p>
 
-    <div id="billOutput" class="output"></div>
+        <h3>Bill Breakdown</h3>
+        <table>
+            <tr>
+                <th>Description</th>
+                <th>Amount (₹)</th>
+            </tr>
+            <tr>
+                <td>Room Unit Charge</td>
+                <td id="elec_amount"></td>
+            </tr>
+            <tr>
+                <td>Pump Unit Charge</td>
+                <td id="pump_amount"></td>
+            </tr>
+            <tr>
+                <td>Rent</td>
+                <td id="rent_display"></td>
+            </tr>
+            <tr>
+                <td>Previous Due</td>
+                <td id="due_display"></td>
+            </tr>
+            <tr>
+                <td>Previous Advance</td>
+                <td id="advance_display"></td>
+            </tr>
+            <tr class="total">
+                <td>Total</td>
+                <td id="total_amount"></td>
+            </tr>
+        </table>
+    </div>
 
     <script>
         function generateBill() {
@@ -139,47 +174,25 @@
             const rentAmount = parseFloat(document.getElementById('rent_amount').value);
             const prevDue = parseFloat(document.getElementById('prev_due').value);
             const prevAdvance = parseFloat(document.getElementById('prev_advance').value);
-
             const totalBill = rentAmount + elecBill + pumpBill + prevDue - prevAdvance;
 
-            const output = `
-                <h3>Calculation Details</h3>
-                <p>Room Unit Charge: (${elecCurr} - ${elecPrev}) × ${elecUnitCharge} = ₹${elecBill.toFixed(2)}</p>
-                <p>Pump Unit Charge: ((${pumpCurr} - ${pumpPrev}) / ${numPeople}) × ${pumpUnitCharge} = ₹${pumpBill.toFixed(2)}</p>
+            document.getElementById('bill_tenant').textContent = tenantName;
+            document.getElementById('bill_month').textContent = billingMonth;
+            document.getElementById('elec_details').textContent = `(${elecCurr} - ${elecPrev}) × ${elecUnitCharge} = ₹${elecBill.toFixed(2)}`;
+            document.getElementById('pump_details').textContent = `(${pumpCurr} - ${pumpPrev}) ÷ ${numPeople} × ${pumpUnitCharge} = ₹${pumpBill.toFixed(2)}`;
+            document.getElementById('elec_amount').textContent = elecBill.toFixed(2);
+            document.getElementById('pump_amount').textContent = pumpBill.toFixed(2);
+            document.getElementById('rent_display').textContent = rentAmount.toFixed(2);
+            document.getElementById('due_display').textContent = prevDue.toFixed(2);
+            document.getElementById('advance_display').textContent = prevAdvance.toFixed(2);
+            document.getElementById('total_amount').textContent = `₹${totalBill.toFixed(2)}`;
 
-                <h3>Bill Breakdown</h3>
-                <table>
-                    <tr>
-                        <th>Description</th>
-                        <th>Amount (₹)</th>
-                    </tr>
-                    <tr>
-                        <td>Room Unit Charge</td>
-                        <td>${elecBill.toFixed(2)}</td>
-                    </tr>
-                    <tr>
-                        <td>Pump Unit Charge</td>
-                        <td>${pumpBill.toFixed(2)}</td>
-                    </tr>
-                    <tr>
-                        <td>Rent</td>
-                        <td>${rentAmount.toFixed(2)}</td>
-                    </tr>
-                    <tr>
-                        <td>Previous Due</td>
-                        <td>${prevDue.toFixed(2)}</td>
-                    </tr>
-                    <tr>
-                        <td>Previous Advance</td>
-                        <td>- ${prevAdvance.toFixed(2)}</td>
-                    </tr>
-                    <tr class="total">
-                        <td>Total</td>
-                        <td>₹${totalBill.toFixed(2)}</td>
-                    </tr>
-                </table>
-            `;
-            document.getElementById('billOutput').innerHTML = output;
+            document.getElementById('bill').style.display = 'block';
+        }
+
+        function downloadPDF() {
+            const bill = document.getElementById('bill');
+            html2pdf().from(bill).save('Rent-Bill.pdf');
         }
     </script>
 
