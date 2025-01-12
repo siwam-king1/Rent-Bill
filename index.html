@@ -4,112 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Rent Bill Generator</title>
+    <link rel="stylesheet" href="styles.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.2/html2pdf.bundle.min.js"></script>
-    <style>
-        body {
-            font-family: 'Arial', sans-serif;
-            background-color: #f4f4f4;
-            padding: 20px;
-            margin: 0;
-        }
-
-        .container {
-            background-color: #fff;
-            padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
-            max-width: 800px;
-            margin: auto;
-            font-family: 'Arial', sans-serif;
-        }
-
-        h2 {
-            font-family: 'Georgia', serif;
-            color: #333;
-            text-align: center;
-            margin-bottom: 30px;
-        }
-
-        input, select, button {
-            width: 100%;
-            padding: 10px;
-            margin: 10px 0;
-            border-radius: 5px;
-            border: 1px solid #ccc;
-            font-size: 16px;
-        }
-
-        button {
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            cursor: pointer;
-        }
-
-        button:hover {
-            background-color: #45a049;
-        }
-
-        .bill-container {
-            background-color: #fff;
-            padding: 20px;
-            border: 2px solid #333;
-            margin-top: 30px;
-            display: none;
-            font-family: 'Georgia', serif;
-        }
-
-        .bill-header {
-            text-align: center;
-            margin-bottom: 20px;
-        }
-
-        .bill-header h3 {
-            margin: 0;
-            font-size: 24px;
-        }
-
-        .bill-header p {
-            margin: 5px 0;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-        }
-
-        th, td {
-            padding: 12px;
-            border: 1px solid #ddd;
-            text-align: right;
-            font-size: 16px;
-        }
-
-        th {
-            background-color: #f2f2f2;
-        }
-
-        .total {
-            background-color: #e9ffe9;
-            font-weight: bold;
-            font-size: 18px;
-        }
-
-        .monospace {
-            font-family: 'Courier New', monospace;
-            font-size: 14px;
-        }
-
-        .optional {
-            display: flex;
-            align-items: center;
-        }
-
-        .optional label {
-            margin-left: 10px;
-        }
-    </style>
 </head>
 <body>
 
@@ -209,69 +105,44 @@
     </div>
 
     <script>
-        document.getElementById('include_pump').addEventListener('change', function () {
-            const isChecked = this.checked;
-            document.getElementById('pump_prev').disabled = !isChecked;
-            document.getElementById('pump_curr').disabled = !isChecked;
-            document.getElementById('pump_unit_charge').disabled = !isChecked;
-            document.getElementById('num_people').disabled = !isChecked;
-        });
-
-        document.getElementById('include_room').addEventListener('change', function () {
-            const isChecked = this.checked;
-            document.getElementById('room_name').disabled = !isChecked;
-            document.getElementById('room_prev').disabled = !isChecked;
-            document.getElementById('room_curr').disabled = !isChecked;
-            document.getElementById('room_unit_charge').disabled = !isChecked;
-        });
-
         function generateBill() {
-            const tenantName = document.getElementById('tenant_name').value;
-            const billingMonth = document.getElementById('billing_month').value;
+            // Get inputs
+            let tenantName = document.getElementById('tenant_name').value;
+            let month = document.getElementById('billing_month').value;
+            let elecPrev = parseFloat(document.getElementById('elec_prev').value);
+            let elecCurr = parseFloat(document.getElementById('elec_curr').value);
+            let elecUnitCharge = parseFloat(document.getElementById('elec_unit_charge').value);
+            let pumpPrev = parseFloat(document.getElementById('pump_prev').value);
+            let pumpCurr = parseFloat(document.getElementById('pump_curr').value);
+            let pumpUnitCharge = parseFloat(document.getElementById('pump_unit_charge').value);
+            let numPeople = parseFloat(document.getElementById('num_people').value);
+            let rentAmount = parseFloat(document.getElementById('rent_amount').value);
+            let prevDue = parseFloat(document.getElementById('prev_due').value);
+            let prevAdvance = parseFloat(document.getElementById('prev_advance').value);
+            let roomPrev = parseFloat(document.getElementById('room_prev').value);
+            let roomCurr = parseFloat(document.getElementById('room_curr').value);
+            let roomUnitCharge = parseFloat(document.getElementById('room_unit_charge').value);
 
-            const elecPrev = parseFloat(document.getElementById('elec_prev').value);
-            const elecCurr = parseFloat(document.getElementById('elec_curr').value);
-            const elecUnitCharge = parseFloat(document.getElementById('elec_unit_charge').value);
-            const elecBill = (elecCurr - elecPrev) * elecUnitCharge;
+            // Calculations
+            let unitCharges = (elecCurr - elecPrev) * elecUnitCharge;
+            let pumpCharges = (pumpCurr - pumpPrev) * pumpUnitCharge / numPeople;
+            let roomCharges = (roomCurr - roomPrev) * roomUnitCharge;
 
-            let pumpBill = 0;
-            if (document.getElementById('include_pump').checked) {
-                const pumpPrev = parseFloat(document.getElementById('pump_prev').value);
-                const pumpCurr = parseFloat(document.getElementById('pump_curr').value);
-                const pumpUnitCharge = parseFloat(document.getElementById('pump_unit_charge').value);
-                const numPeople = parseInt(document.getElementById('num_people').value);
-                pumpBill = ((pumpCurr - pumpPrev) * pumpUnitCharge) / numPeople;
-            }
+            let totalUnitCharges = unitCharges + (document.getElementById('include_pump').checked ? pumpCharges : 0) + (document.getElementById('include_room').checked ? roomCharges : 0);
+            let totalBill = totalUnitCharges + rentAmount + prevDue - prevAdvance;
 
-            let roomBill = 0;
-            if (document.getElementById('include_room').checked) {
-                const roomName = document.getElementById('room_name').value;
-                const roomPrev = parseFloat(document.getElementById('room_prev').value);
-                const roomCurr = parseFloat(document.getElementById('room_curr').value);
-                const roomUnitCharge = parseFloat(document.getElementById('room_unit_charge').value);
-                roomBill = (roomCurr - roomPrev) * roomUnitCharge;
-            }
-
-            const unitCharges = elecBill + pumpBill + roomBill;
-
-            const rentAmount = parseFloat(document.getElementById('rent_amount').value);
-            const prevDue = parseFloat(document.getElementById('prev_due').value);
-            const prevAdvance = parseFloat(document.getElementById('prev_advance').value);
-            const totalBill = rentAmount + unitCharges + prevDue - prevAdvance;
-
-            // Displaying all values
+            // Display Bill
             document.getElementById('bill_tenant').textContent = tenantName;
-            document.getElementById('bill_month').textContent = billingMonth;
+            document.getElementById('bill_month').textContent = month;
+            document.getElementById('elec_calc').textContent = `(${elecCurr} - ${elecPrev}) × ${elecUnitCharge} = ₹${unitCharges.toFixed(2)}`;
+            document.getElementById('pump_calc').textContent = document.getElementById('include_pump').checked ? `(${pumpCurr} - ${pumpPrev}) × ${pumpUnitCharge} ÷ ${numPeople} = ₹${pumpCharges.toFixed(2)}` : 'N/A';
+            document.getElementById('room_calc').textContent = document.getElementById('include_room').checked ? `(${roomCurr} - ${roomPrev}) × ${roomUnitCharge} = ₹${roomCharges.toFixed(2)}` : 'N/A';
 
-            document.getElementById('elec_calc').textContent = `(${elecCurr} - ${elecPrev}) × ₹${elecUnitCharge} = ₹${elecBill.toFixed(2)}`;
-            document.getElementById('pump_calc').textContent = pumpBill > 0 ? `(${pumpCurr} - ${pumpPrev}) × ₹${pumpUnitCharge} ÷ ${numPeople} = ₹${pumpBill.toFixed(2)}` : 'N/A';
-            document.getElementById('room_calc').textContent = roomBill > 0 ? `(${roomCurr} - ${roomPrev}) × ₹${roomUnitCharge} = ₹${roomBill.toFixed(2)}` : 'N/A';
-
-            document.getElementById('unit_amount').textContent = unitCharges.toFixed(2);
-            document.getElementById('rent_display').textContent = rentAmount.toFixed(2);
-            document.getElementById('due_display').textContent = prevDue.toFixed(2);
-            document.getElementById('advance_display').textContent = prevAdvance.toFixed(2);
-            document.getElementById('total_amount').textContent = totalBill.toFixed(2);
+            document.getElementById('unit_amount').textContent = `₹${totalUnitCharges.toFixed(2)}`;
+            document.getElementById('rent_display').textContent = `₹${rentAmount.toFixed(2)}`;
+            document.getElementById('due_display').textContent = `₹${prevDue.toFixed(2)}`;
+            document.getElementById('advance_display').textContent = `₹${prevAdvance.toFixed(2)}`;
+            document.getElementById('total_amount').textContent = `₹${totalBill.toFixed(2)}`;
 
             document.getElementById('bill').style.display = 'block';
         }
