@@ -68,7 +68,6 @@
 
         <button onclick="generateBill()">Generate Bill</button>
         <button onclick="downloadPDF()">Download PDF</button>
-        <button onclick="shareBillAsImage()">Share Bill as Image</button>
     </div>
 
     <div id="bill" class="bill-container">
@@ -81,8 +80,8 @@
         <div id="calculation_details">
             <h3>Calculation Details</h3>
             <p><strong>Electricity Calculation:</strong> <span id="elec_calc" class="monospace"></span></p>
-            <p><strong>Pump Calculation:</strong> <span id="pump_calc" class="monospace"></span></p>
-            <p><strong>Additional Room Calculation:</strong> <span id="room_calc" class="monospace"></span></p>
+            <p id="pump_calc_section" style="display: none;"><strong>Pump Calculation:</strong> <span id="pump_calc" class="monospace"></span></p>
+            <p id="room_calc_section" style="display: none;"><strong>Additional Room Calculation:</strong> <span id="room_calc" class="monospace"></span></p>
         </div>
 
         <h3>Bill Breakdown</h3>
@@ -157,6 +156,21 @@
             // Toggle calculation details visibility
             if (document.getElementById('show_calculation').checked) {
                 document.getElementById('calculation_details').style.display = 'block';
+
+                // Show/Hide pump charges section based on selection
+                if (document.getElementById('include_pump').checked) {
+                    document.getElementById('pump_calc_section').style.display = 'block';
+                } else {
+                    document.getElementById('pump_calc_section').style.display = 'none';
+                }
+
+                // Show/Hide room charges section based on selection
+                if (document.getElementById('include_room').checked) {
+                    document.getElementById('room_calc_section').style.display = 'block';
+                } else {
+                    document.getElementById('room_calc_section').style.display = 'none';
+                }
+
             } else {
                 document.getElementById('calculation_details').style.display = 'none';
             }
@@ -167,17 +181,6 @@
         function downloadPDF() {
             const element = document.getElementById('bill');
             html2pdf(element);
-        }
-
-        function shareBillAsImage() {
-            const element = document.getElementById('bill');
-            html2canvas(element).then(canvas => {
-                const image = canvas.toDataURL();
-                const link = document.createElement('a');
-                link.href = image;
-                link.download = 'Rent_Bill.png';
-                link.click();
-            });
         }
     </script>
 </body>
