@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Advanced Rent Bill Generator</title>
+    <title>Rent Bill Generator</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -11,12 +11,14 @@
             text-align: center;
             padding: 20px;
         }
-        form {
+        form, .output {
             background-color: #fff;
             padding: 20px;
             display: inline-block;
             border-radius: 10px;
             box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            width: 80%;
+            max-width: 600px;
         }
         input, select, button {
             width: 90%;
@@ -34,17 +36,30 @@
         button:hover {
             background-color: #218838;
         }
-        .section-title {
-            font-weight: bold;
+        table {
+            width: 100%;
+            border-collapse: collapse;
             margin-top: 20px;
+        }
+        th, td {
+            padding: 10px;
+            border: 1px solid #ccc;
+            text-align: center;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .total {
+            font-weight: bold;
+            background-color: #e9ffe9;
         }
     </style>
 </head>
 <body>
 
-    <h2>Advanced Rent Bill Generator</h2>
+    <h2>Rent Bill Generator</h2>
+
     <form id="billForm">
-        <!-- Tenant Details -->
         <label>Tenant Name:</label>
         <input type="text" id="tenant_name" required><br>
 
@@ -65,8 +80,7 @@
             <option>December</option>
         </select><br>
 
-        <!-- Electricity Calculation -->
-        <div class="section-title">Electricity Bill</div>
+        <h3>Room Electricity</h3>
         <label>Previous Reading:</label>
         <input type="number" id="elec_prev" step="0.01" required><br>
 
@@ -76,8 +90,7 @@
         <label>Unit Charge (₹):</label>
         <input type="number" id="elec_unit_charge" step="0.01" required><br>
 
-        <!-- Pump Calculation -->
-        <div class="section-title">Pump Charges</div>
+        <h3>Pump Charges</h3>
         <label>Previous Reading:</label>
         <input type="number" id="pump_prev" step="0.01" required><br>
 
@@ -90,8 +103,7 @@
         <label>Number of People Sharing:</label>
         <input type="number" id="num_people" step="1" required><br>
 
-        <!-- Rent & Adjustments -->
-        <div class="section-title">Rent & Adjustments</div>
+        <h3>Rent & Adjustments</h3>
         <label>Rent Amount (₹):</label>
         <input type="number" id="rent_amount" required><br>
 
@@ -101,30 +113,22 @@
         <label>Previous Advance (₹):</label>
         <input type="number" id="prev_advance" value="0"><br>
 
-        <!-- Display Options -->
-        <label>
-            <input type="checkbox" id="show_calculation" checked>
-            Show Detailed Calculation
-        </label><br>
-
         <button type="button" onclick="generateBill()">Generate Bill</button>
     </form>
 
-    <div id="billOutput" style="margin-top: 20px;"></div>
+    <div id="billOutput" class="output"></div>
 
     <script>
         function generateBill() {
             const tenantName = document.getElementById('tenant_name').value;
             const billingMonth = document.getElementById('billing_month').value;
 
-            // Electricity Calculation
             const elecPrev = parseFloat(document.getElementById('elec_prev').value);
             const elecCurr = parseFloat(document.getElementById('elec_curr').value);
             const elecUnitCharge = parseFloat(document.getElementById('elec_unit_charge').value);
             const elecUsage = elecCurr - elecPrev;
             const elecBill = elecUsage * elecUnitCharge;
 
-            // Pump Calculation
             const pumpPrev = parseFloat(document.getElementById('pump_prev').value);
             const pumpCurr = parseFloat(document.getElementById('pump_curr').value);
             const pumpUnitCharge = parseFloat(document.getElementById('pump_unit_charge').value);
@@ -132,31 +136,52 @@
             const pumpUsage = pumpCurr - pumpPrev;
             const pumpBill = (pumpUsage * pumpUnitCharge) / numPeople;
 
-            // Rent & Adjustments
             const rentAmount = parseFloat(document.getElementById('rent_amount').value);
             const prevDue = parseFloat(document.getElementById('prev_due').value);
             const prevAdvance = parseFloat(document.getElementById('prev_advance').value);
 
             const totalBill = rentAmount + elecBill + pumpBill + prevDue - prevAdvance;
 
-            const showCalculation = document.getElementById('show_calculation').checked;
+            const output = `
+                <h3>Calculation Details</h3>
+                <p>Room Unit Charge: (${elecCurr} - ${elecPrev}) × ${elecUnitCharge} = ₹${elecBill.toFixed(2)}</p>
+                <p>Pump Unit Charge: ((${pumpCurr} - ${pumpPrev}) / ${numPeople}) × ${pumpUnitCharge} = ₹${pumpBill.toFixed(2)}</p>
 
-            // Display Bill
-            let billDetails = `<h3>Rent Bill for ${tenantName} (${billingMonth})</h3>`;
-            if (showCalculation) {
-                billDetails += `
-                    <p>Rent: ₹${rentAmount.toFixed(2)}</p>
-                    <p>Electricity Bill: ₹${elecBill.toFixed(2)} (Usage: ${elecUsage} units)</p>
-                    <p>Pump Charges: ₹${pumpBill.toFixed(2)} (Usage: ${pumpUsage} units)</p>
-                    <p>Previous Due: ₹${prevDue.toFixed(2)}</p>
-                    <p>Previous Advance: -₹${prevAdvance.toFixed(2)}</p>
-                    <hr>
-                `;
-            }
-            billDetails += `<h3>Total Payable Amount: ₹${totalBill.toFixed(2)}</h3>`;
-
-            document.getElementById('billOutput').innerHTML = billDetails;
+                <h3>Bill Breakdown</h3>
+                <table>
+                    <tr>
+                        <th>Description</th>
+                        <th>Amount (₹)</th>
+                    </tr>
+                    <tr>
+                        <td>Room Unit Charge</td>
+                        <td>${elecBill.toFixed(2)}</td>
+                    </tr>
+                    <tr>
+                        <td>Pump Unit Charge</td>
+                        <td>${pumpBill.toFixed(2)}</td>
+                    </tr>
+                    <tr>
+                        <td>Rent</td>
+                        <td>${rentAmount.toFixed(2)}</td>
+                    </tr>
+                    <tr>
+                        <td>Previous Due</td>
+                        <td>${prevDue.toFixed(2)}</td>
+                    </tr>
+                    <tr>
+                        <td>Previous Advance</td>
+                        <td>- ${prevAdvance.toFixed(2)}</td>
+                    </tr>
+                    <tr class="total">
+                        <td>Total</td>
+                        <td>₹${totalBill.toFixed(2)}</td>
+                    </tr>
+                </table>
+            `;
+            document.getElementById('billOutput').innerHTML = output;
         }
     </script>
+
 </body>
 </html>
