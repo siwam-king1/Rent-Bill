@@ -121,7 +121,7 @@
       document.getElementById("calculationSection").style.display = document.getElementById("showCalculation").checked ? "block" : "none";
     }
 
-   function generateBill() {
+function generateBill() {
   const customerName = document.getElementById("customerName").value;
   const month = document.getElementById("month").value;
   const previousUnit = parseFloat(document.getElementById("previousUnit").value);
@@ -164,6 +164,11 @@
     calculationDetails += `\nAdditional Room Charge: (${addCurrUnit} - ${addPrevUnit}) × ₹${unitCost} = ₹${additionalRoomCharge.toFixed(2)}`;
   }
 
+  calculationDetails += `\nRent: ₹${rent.toFixed(2)}`;
+  calculationDetails += `\nPrevious Due: ₹${due.toFixed(2)}`;
+  calculationDetails += `\nMaintenance/Service: ₹${extraCharge.toFixed(2)}`;
+  calculationDetails += `\nAdvance Deduction: -₹${advance.toFixed(2)}`;
+
   document.getElementById("calculationDetails").innerText = calculationDetails;
 
   document.getElementById("breakdownTable").innerHTML = `
@@ -180,6 +185,7 @@
   document.getElementById("receiptTotal").innerText = total.toFixed(2);
   document.getElementById("billResult").style.display = "block";
 }
+
 
   </script>
 </body>
