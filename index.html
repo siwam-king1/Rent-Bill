@@ -100,6 +100,15 @@
             font-family: 'Courier New', monospace;
             font-size: 14px;
         }
+
+        .optional {
+            display: flex;
+            align-items: center;
+        }
+
+        .optional label {
+            margin-left: 10px;
+        }
     </style>
 </head>
 <body>
@@ -130,15 +139,29 @@
         <input type="number" id="elec_unit_charge" placeholder="Unit Charge (₹)">
 
         <h3>Pump Charges</h3>
-        <input type="number" id="pump_prev" placeholder="Previous Reading">
-        <input type="number" id="pump_curr" placeholder="Current Reading">
-        <input type="number" id="pump_unit_charge" placeholder="Unit Charge (₹)">
-        <input type="number" id="num_people" placeholder="Number of People Sharing">
+        <div class="optional">
+            <input type="checkbox" id="include_pump">
+            <label for="include_pump">Include Pump Charges</label>
+        </div>
+        <input type="number" id="pump_prev" placeholder="Previous Reading" disabled>
+        <input type="number" id="pump_curr" placeholder="Current Reading" disabled>
+        <input type="number" id="pump_unit_charge" placeholder="Unit Charge (₹)" disabled>
+        <input type="number" id="num_people" placeholder="Number of People Sharing" disabled>
 
         <h3>Rent & Adjustments</h3>
         <input type="number" id="rent_amount" placeholder="Rent (₹)">
         <input type="number" id="prev_due" placeholder="Previous Due (₹)" value="0">
         <input type="number" id="prev_advance" placeholder="Previous Advance (₹)" value="0">
+
+        <h3>Additional Room (Optional)</h3>
+        <div class="optional">
+            <input type="checkbox" id="include_room">
+            <label for="include_room">Include Additional Room Charges</label>
+        </div>
+        <input type="text" id="room_name" placeholder="Room Name (Optional)" disabled>
+        <input type="number" id="room_prev" placeholder="Room Previous Reading" disabled>
+        <input type="number" id="room_curr" placeholder="Room Current Reading" disabled>
+        <input type="number" id="room_unit_charge" placeholder="Room Unit Charge (₹)" disabled>
 
         <button onclick="generateBill()">Generate Bill</button>
         <button onclick="downloadPDF()">Download PDF</button>
@@ -154,6 +177,7 @@
         <h3>Calculation Details</h3>
         <p><strong>Electricity Calculation:</strong> <span id="elec_calc" class="monospace"></span></p>
         <p><strong>Pump Calculation:</strong> <span id="pump_calc" class="monospace"></span></p>
+        <p><strong>Additional Room Calculation:</strong> <span id="room_calc" class="monospace"></span></p>
 
         <h3>Bill Breakdown</h3>
         <table>
@@ -185,6 +209,22 @@
     </div>
 
     <script>
+        document.getElementById('include_pump').addEventListener('change', function () {
+            const isChecked = this.checked;
+            document.getElementById('pump_prev').disabled = !isChecked;
+            document.getElementById('pump_curr').disabled = !isChecked;
+            document.getElementById('pump_unit_charge').disabled = !isChecked;
+            document.getElementById('num_people').disabled = !isChecked;
+        });
+
+        document.getElementById('include_room').addEventListener('change', function () {
+            const isChecked = this.checked;
+            document.getElementById('room_name').disabled = !isChecked;
+            document.getElementById('room_prev').disabled = !isChecked;
+            document.getElementById('room_curr').disabled = !isChecked;
+            document.getElementById('room_unit_charge').disabled = !isChecked;
+        });
+
         function generateBill() {
             const tenantName = document.getElementById('tenant_name').value;
             const billingMonth = document.getElementById('billing_month').value;
@@ -194,13 +234,25 @@
             const elecUnitCharge = parseFloat(document.getElementById('elec_unit_charge').value);
             const elecBill = (elecCurr - elecPrev) * elecUnitCharge;
 
-            const pumpPrev = parseFloat(document.getElementById('pump_prev').value);
-            const pumpCurr = parseFloat(document.getElementById('pump_curr').value);
-            const pumpUnitCharge = parseFloat(document.getElementById('pump_unit_charge').value);
-            const numPeople = parseInt(document.getElementById('num_people').value);
-            const pumpBill = ((pumpCurr - pumpPrev) * pumpUnitCharge) / numPeople;
+            let pumpBill = 0;
+            if (document.getElementById('include_pump').checked) {
+                const pumpPrev = parseFloat(document.getElementById('pump_prev').value);
+                const pumpCurr = parseFloat(document.getElementById('pump_curr').value);
+                const pumpUnitCharge = parseFloat(document.getElementById('pump_unit_charge').value);
+                const numPeople = parseInt(document.getElementById('num_people').value);
+                pumpBill = ((pumpCurr - pumpPrev) * pumpUnitCharge) / numPeople;
+            }
 
-            const unitCharges = elecBill + pumpBill;
+            let roomBill = 0;
+            if (document.getElementById('include_room').checked) {
+                const roomName = document.getElementById('room_name').value;
+                const roomPrev = parseFloat(document.getElementById('room_prev').value);
+                const roomCurr = parseFloat(document.getElementById('room_curr').value);
+                const roomUnitCharge = parseFloat(document.getElementById('room_unit_charge').value);
+                roomBill = (roomCurr - roomPrev) * roomUnitCharge;
+            }
+
+            const unitCharges = elecBill + pumpBill + roomBill;
 
             const rentAmount = parseFloat(document.getElementById('rent_amount').value);
             const prevDue = parseFloat(document.getElementById('prev_due').value);
@@ -212,22 +264,22 @@
             document.getElementById('bill_month').textContent = billingMonth;
 
             document.getElementById('elec_calc').textContent = `(${elecCurr} - ${elecPrev}) × ₹${elecUnitCharge} = ₹${elecBill.toFixed(2)}`;
-            document.getElementById('pump_calc').textContent = `(${pumpCurr} - ${pumpPrev}) × ₹${pumpUnitCharge} ÷ ${numPeople} = ₹${pumpBill.toFixed(2)}`;
+            document.getElementById('pump_calc').textContent = pumpBill > 0 ? `(${pumpCurr} - ${pumpPrev}) × ₹${pumpUnitCharge} ÷ ${numPeople} = ₹${pumpBill.toFixed(2)}` : 'N/A';
+            document.getElementById('room_calc').textContent = roomBill > 0 ? `(${roomCurr} - ${roomPrev}) × ₹${roomUnitCharge} = ₹${roomBill.toFixed(2)}` : 'N/A';
 
             document.getElementById('unit_amount').textContent = unitCharges.toFixed(2);
             document.getElementById('rent_display').textContent = rentAmount.toFixed(2);
             document.getElementById('due_display').textContent = prevDue.toFixed(2);
             document.getElementById('advance_display').textContent = prevAdvance.toFixed(2);
-            document.getElementById('total_amount').textContent = `₹${totalBill.toFixed(2)}`;
+            document.getElementById('total_amount').textContent = totalBill.toFixed(2);
 
             document.getElementById('bill').style.display = 'block';
         }
 
         function downloadPDF() {
-            const bill = document.getElementById('bill');
-            html2pdf().from(bill).save('Rent-Bill.pdf');
+            const element = document.getElementById('bill');
+            html2pdf(element);
         }
     </script>
-
 </body>
 </html>
