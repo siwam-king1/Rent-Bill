@@ -1,187 +1,162 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Shareable Rental Bill Generator</title>
-  <link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Rent Bill Generator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            text-align: center;
+            padding: 20px;
+        }
+        form {
+            background-color: #fff;
+            padding: 20px;
+            display: inline-block;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        input, select, button {
+            width: 90%;
+            padding: 10px;
+            margin: 8px 0;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+        button {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #218838;
+        }
+        .section-title {
+            font-weight: bold;
+            margin-top: 20px;
+        }
+    </style>
 </head>
 <body>
-  <div class="container">
-    <h1>Rental Bill Generator</h1>
+
+    <h2>Advanced Rent Bill Generator</h2>
     <form id="billForm">
-      <label for="customerName">Customer Name:</label>
-      <input type="text" id="customerName" placeholder="Enter customer name" required>
+        <!-- Tenant Details -->
+        <label>Tenant Name:</label>
+        <input type="text" id="tenant_name" required><br>
 
-      <label for="month">Select Month:</label>
-      <select id="month" required>
-        <option value="" disabled selected>Select a month</option>
-        <option value="January">January</option>
-        <option value="February">February</option>
-        <option value="March">March</option>
-        <option value="April">April</option>
-        <option value="May">May</option>
-        <option value="June">June</option>
-        <option value="July">July</option>
-        <option value="August">August</option>
-        <option value="September">September</option>
-        <option value="October">October</option>
-        <option value="November">November</option>
-        <option value="December">December</option>
-      </select>
+        <label>Billing Month:</label>
+        <select id="billing_month" required>
+            <option value="" disabled selected>Select Month</option>
+            <option>January</option>
+            <option>February</option>
+            <option>March</option>
+            <option>April</option>
+            <option>May</option>
+            <option>June</option>
+            <option>July</option>
+            <option>August</option>
+            <option>September</option>
+            <option>October</option>
+            <option>November</option>
+            <option>December</option>
+        </select><br>
 
-      <label for="previousUnit">Previous Unit:</label>
-      <input type="number" id="previousUnit" required>
+        <!-- Electricity Calculation -->
+        <div class="section-title">Electricity Bill</div>
+        <label>Previous Reading:</label>
+        <input type="number" id="elec_prev" step="0.01" required><br>
 
-      <label for="currentUnit">Current Unit:</label>
-      <input type="number" id="currentUnit" required>
+        <label>Current Reading:</label>
+        <input type="number" id="elec_curr" step="0.01" required><br>
 
-      <label for="unitCost">Cost per Unit (₹):</label>
-      <input type="number" id="unitCost" value="10" required>
+        <label>Unit Charge (₹):</label>
+        <input type="number" id="elec_unit_charge" step="0.01" required><br>
 
-      <div>
-        <input type="checkbox" id="enablePump" onclick="togglePump()"> Enable Pump Calculation
-      </div>
-      <div id="pumpFields" style="display:none;">
-        <label>Previous Pump Unit: <input type="number" id="previousPumpUnit"></label><br>
-        <label>Current Pump Unit: <input type="number" id="currentPumpUnit"></label><br>
-        <label>Pump Members: <input type="number" id="pumpMembers"></label><br>
-      </div>
+        <!-- Pump Calculation -->
+        <div class="section-title">Pump Charges</div>
+        <label>Previous Reading:</label>
+        <input type="number" id="pump_prev" step="0.01" required><br>
 
-      <div>
-        <input type="checkbox" id="enableAdditionalRoom" onclick="toggleAdditionalRoom()"> Enable Additional Room
-      </div>
-      <div id="additionalRoomFields" style="display:none;">
-        <label>Room Name: <input type="text" id="additionalRoomName"></label><br>
-        <label>Previous Unit: <input type="number" id="additionalPreviousUnit"></label><br>
-        <label>Current Unit: <input type="number" id="additionalCurrentUnit"></label><br>
-      </div>
+        <label>Current Reading:</label>
+        <input type="number" id="pump_curr" step="0.01" required><br>
 
-      <label for="rent">Rent (₹):</label>
-      <input type="number" id="rent" required>
+        <label>Unit Charge (₹):</label>
+        <input type="number" id="pump_unit_charge" step="0.01" required><br>
 
-      <label for="due">Previous Due (₹):</label>
-      <input type="number" id="due" placeholder="0">
+        <label>Number of People Sharing:</label>
+        <input type="number" id="num_people" step="1" required><br>
 
-      <label for="advance">Previous Advance (₹):</label>
-      <input type="number" id="advance" placeholder="0">
+        <!-- Rent & Adjustments -->
+        <div class="section-title">Rent & Adjustments</div>
+        <label>Rent Amount (₹):</label>
+        <input type="number" id="rent_amount" required><br>
 
-      <label for="extraCharge">Maintenance/Service Charge (₹):</label>
-      <input type="number" id="extraCharge" value="0">
+        <label>Previous Dues (₹):</label>
+        <input type="number" id="prev_due" value="0"><br>
 
-      <!-- Checkbox to Show/Hide Calculation Details -->
-      <div>
-        <input type="checkbox" id="showCalculation" onclick="toggleCalculation()" checked>
-        Show Calculation Details
-      </div>
+        <label>Previous Advance (₹):</label>
+        <input type="number" id="prev_advance" value="0"><br>
 
-      <button type="button" onclick="generateBill()">Generate Bill</button>
+        <!-- Display Options -->
+        <label>
+            <input type="checkbox" id="show_calculation" checked>
+            Show Detailed Calculation
+        </label><br>
+
+        <button type="button" onclick="generateBill()">Generate Bill</button>
     </form>
 
-    <div id="billResult" class="result" style="display:none;">
-      <div id="billContent" class="receipt">
-        <div class="receipt-header">
-          <h2>Rental Bill</h2>
-          <p id="receiptMonth"></p>
-          <p id="receiptCustomerName"></p>
-        </div>
+    <div id="billOutput" style="margin-top: 20px;"></div>
 
-        <!-- Calculation Details Section -->
-        <div id="calculationSection" class="receipt-section">
-          <h4>Calculation Details</h4>
-          <p id="calculationDetails"></p>
-        </div>
+    <script>
+        function generateBill() {
+            const tenantName = document.getElementById('tenant_name').value;
+            const billingMonth = document.getElementById('billing_month').value;
 
-        <div class="receipt-section">
-          <h4>Bill Breakdown</h4>
-          <table class="receipt-table" id="breakdownTable"></table>
-        </div>
+            // Electricity Calculation
+            const elecPrev = parseFloat(document.getElementById('elec_prev').value);
+            const elecCurr = parseFloat(document.getElementById('elec_curr').value);
+            const elecUnitCharge = parseFloat(document.getElementById('elec_unit_charge').value);
+            const elecUsage = elecCurr - elecPrev;
+            const elecBill = elecUsage * elecUnitCharge;
 
-        <div class="receipt-total">
-          Total: ₹<span id="receiptTotal"></span>
-        </div>
-      </div>
-      <div class="actions">
-        <button onclick="downloadBill()">Download Bill as Image</button>
-        <button onclick="shareBill()">Share Bill</button>
-      </div>
-    </div>
-  </div>
+            // Pump Calculation
+            const pumpPrev = parseFloat(document.getElementById('pump_prev').value);
+            const pumpCurr = parseFloat(document.getElementById('pump_curr').value);
+            const pumpUnitCharge = parseFloat(document.getElementById('pump_unit_charge').value);
+            const numPeople = parseInt(document.getElementById('num_people').value);
+            const pumpUsage = pumpCurr - pumpPrev;
+            const pumpBill = (pumpUsage * pumpUnitCharge) / numPeople;
 
-  <script>
-    function togglePump() {
-      document.getElementById("pumpFields").style.display = document.getElementById("enablePump").checked ? "block" : "none";
-    }
+            // Rent & Adjustments
+            const rentAmount = parseFloat(document.getElementById('rent_amount').value);
+            const prevDue = parseFloat(document.getElementById('prev_due').value);
+            const prevAdvance = parseFloat(document.getElementById('prev_advance').value);
 
-    function toggleAdditionalRoom() {
-      document.getElementById("additionalRoomFields").style.display = document.getElementById("enableAdditionalRoom").checked ? "block" : "none";
-    }
+            const totalBill = rentAmount + elecBill + pumpBill + prevDue - prevAdvance;
 
-    function toggleCalculation() {
-      document.getElementById("calculationSection").style.display = document.getElementById("showCalculation").checked ? "block" : "none";
-    }
+            const showCalculation = document.getElementById('show_calculation').checked;
 
-function generateBill() {
-  const customerName = document.getElementById("customerName").value;
-  const month = document.getElementById("month").value;
-  const previousUnit = parseFloat(document.getElementById("previousUnit").value);
-  const currentUnit = parseFloat(document.getElementById("currentUnit").value);
-  const unitCost = parseFloat(document.getElementById("unitCost").value);
-  const rent = parseFloat(document.getElementById("rent").value);
-  const due = parseFloat(document.getElementById("due").value) || 0;
-  const advance = parseFloat(document.getElementById("advance").value) || 0;
-  const extraCharge = parseFloat(document.getElementById("extraCharge").value) || 0;
+            // Display Bill
+            let billDetails = `<h3>Rent Bill for ${tenantName} (${billingMonth})</h3>`;
+            if (showCalculation) {
+                billDetails += `
+                    <p>Rent: ₹${rentAmount.toFixed(2)}</p>
+                    <p>Electricity Bill: ₹${elecBill.toFixed(2)} (Usage: ${elecUsage} units)</p>
+                    <p>Pump Charges: ₹${pumpBill.toFixed(2)} (Usage: ${pumpUsage} units)</p>
+                    <p>Previous Due: ₹${prevDue.toFixed(2)}</p>
+                    <p>Previous Advance: -₹${prevAdvance.toFixed(2)}</p>
+                    <hr>
+                `;
+            }
+            billDetails += `<h3>Total Payable Amount: ₹${totalBill.toFixed(2)}</h3>`;
 
-  const roomUnitCharge = (currentUnit - previousUnit) * unitCost;
-  let pumpCharge = 0;
-
-  if (document.getElementById("enablePump").checked) {
-    const prevPump = parseFloat(document.getElementById("previousPumpUnit").value);
-    const currPump = parseFloat(document.getElementById("currentPumpUnit").value);
-    const members = parseFloat(document.getElementById("pumpMembers").value) || 1;
-    pumpCharge = ((currPump - prevPump) * unitCost) / members;
-  }
-
-  let additionalRoomCharge = 0;
-  if (document.getElementById("enableAdditionalRoom").checked) {
-    const addPrevUnit = parseFloat(document.getElementById("additionalPreviousUnit").value);
-    const addCurrUnit = parseFloat(document.getElementById("additionalCurrentUnit").value);
-    additionalRoomCharge = (addCurrUnit - addPrevUnit) * unitCost;
-  }
-
-  const total = roomUnitCharge + pumpCharge + additionalRoomCharge + rent + due + extraCharge - advance;
-
-  document.getElementById("receiptMonth").innerText = `Month: ${month}`;
-  document.getElementById("receiptCustomerName").innerText = `Customer: ${customerName}`;
-
-  let calculationDetails = `Room Unit Charge: (${currentUnit} - ${previousUnit}) × ₹${unitCost} = ₹${roomUnitCharge.toFixed(2)}`;
-
-  if (document.getElementById("enablePump").checked) {
-    calculationDetails += `\nPump Unit Charge: ((${currPump} - ${prevPump}) ÷ ${members}) × ₹${unitCost} = ₹${pumpCharge.toFixed(2)}`;
-  }
-
-  if (document.getElementById("enableAdditionalRoom").checked) {
-    calculationDetails += `\nAdditional Room Charge: (${addCurrUnit} - ${addPrevUnit}) × ₹${unitCost} = ₹${additionalRoomCharge.toFixed(2)}`;
-  }
-
-  document.getElementById("calculationDetails").innerText = calculationDetails;
-
-  document.getElementById("breakdownTable").innerHTML = `
-    <tr><th>Description</th><th>Amount (₹)</th></tr>
-    <tr><td>Room Unit Charge</td><td>${roomUnitCharge.toFixed(2)}</td></tr>
-    <tr><td>Pump Charge</td><td>${pumpCharge.toFixed(2)}</td></tr>
-    <tr><td>Additional Room Charge</td><td>${additionalRoomCharge.toFixed(2)}</td></tr>
-    <tr><td>Rent</td><td>${rent.toFixed(2)}</td></tr>
-    <tr><td>Previous Due</td><td>${due.toFixed(2)}</td></tr>
-    <tr><td>Maintenance/Service</td><td>${extraCharge.toFixed(2)}</td></tr>
-    <tr><td>Advance Deduction</td><td>- ${advance.toFixed(2)}</td></tr>
-  `;
-
-  document.getElementById("receiptTotal").innerText = total.toFixed(2);
-  document.getElementById("billResult").style.display = "block";
-}
-
-
-  </script>
+            document.getElementById('billOutput').innerHTML = billDetails;
+        }
+    </script>
 </body>
 </html>
