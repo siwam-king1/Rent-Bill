@@ -114,7 +114,8 @@
         </div>
 
         <h3>Calculation Details</h3>
-        <p>Unit Charges: <span id="unit_details"></span></p>
+        <p><strong>Electricity Calculation:</strong> <span id="elec_calc"></span></p>
+        <p><strong>Pump Calculation:</strong> <span id="pump_calc"></span></p>
 
         <h3>Bill Breakdown</h3>
         <table>
@@ -168,9 +169,13 @@
             const prevAdvance = parseFloat(document.getElementById('prev_advance').value);
             const totalBill = rentAmount + unitCharges + prevDue - prevAdvance;
 
+            // Displaying all values
             document.getElementById('bill_tenant').textContent = tenantName;
             document.getElementById('bill_month').textContent = billingMonth;
-            document.getElementById('unit_details').textContent = `Electricity + Pump = ₹${unitCharges.toFixed(2)}`;
+
+            document.getElementById('elec_calc').textContent = `(${elecCurr} - ${elecPrev}) × ₹${elecUnitCharge} = ₹${elecBill.toFixed(2)}`;
+            document.getElementById('pump_calc').textContent = `(${pumpCurr} - ${pumpPrev}) × ₹${pumpUnitCharge} ÷ ${numPeople} = ₹${pumpBill.toFixed(2)}`;
+
             document.getElementById('unit_amount').textContent = unitCharges.toFixed(2);
             document.getElementById('rent_display').textContent = rentAmount.toFixed(2);
             document.getElementById('due_display').textContent = prevDue.toFixed(2);
