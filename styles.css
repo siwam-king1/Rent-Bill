@@ -192,29 +192,83 @@ table .total {
     }
 }
 
-/* Changes for Calculation Details and Bill Breakdown */
-.calculation-details,
-.bill-breakdown {
+/* Changes for Calculation Details */
+.calculation-details {
     font-family: 'Roboto', sans-serif; /* Updated Font */
     font-size: 16px;
     color: #0288d1; /* Sky Blue */
     margin-bottom: 10px;
+    padding: 10px;
+    border: 1px dashed #0288d1; /* Dashed Border for Calculation Section */
+    border-radius: 4px;
+    background-color: #f1f8e9; /* Light background for Calculation Section */
 }
 
-.calculation-details span,
-.bill-breakdown span {
+.calculation-details span {
     font-size: 16px;
     color: #333; /* Darker text for values */
-    font-weight: normal; /* Removed Bold */
+    font-weight: normal;
 }
 
-.calculation-details,
-.bill-breakdown {
-    display: block;
-    margin-top: 10px;
+.calculation-details label {
+    font-weight: normal;
+    color: #0288d1;
 }
 
-.calculation-details,
+/* Changes for Bill Breakdown */
 .bill-breakdown {
+    font-family: 'Roboto', sans-serif; /* Updated Font */
+    font-size: 16px;
+    color: #0288d1; /* Sky Blue */
     margin-top: 10px;
+    margin-bottom: 10px;
+    padding: 10px;
+    background-color: #e1f5fe; /* Light Blue for Bill Breakdown */
+    border-radius: 4px;
+}
+
+.bill-breakdown table {
+    width: 100%;
+}
+
+.bill-breakdown th {
+    font-size: 16px;
+    font-weight: normal;
+    background-color: #0288d1; /* Sky Blue Background */
+    color: #fff;
+    text-align: left;
+}
+
+.bill-breakdown td {
+    font-size: 16px;
+    color: #333;
+}
+
+.bill-breakdown .total {
+    font-size: 18px;
+    font-weight: bold;
+    color: #0288d1; /* Sky Blue */
+    text-align: right;
+}
+
+.bill-breakdown .total td {
+    font-size: 20px;
+    color: #0288d1;
+}
+
+/* Additional Room Calculation Section */
+.additional-room {
+    font-family: 'Roboto', sans-serif; /* Updated Font */
+    font-size: 16px;
+    color: #0288d1;
+    margin-top: 20px;
+    padding: 10px;
+    background-color: #f1f8e9; /* Light Background for Additional Room */
+    border-radius: 4px;
+}
+
+.additional-room span {
+    font-size: 16px;
+    color: #333;
+    font-weight: normal;
 }
