@@ -8,28 +8,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.2/html2pdf.bundle.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/0.4.1/html2canvas.min.js"></script>
-    <style>
-        .collapsible {
-            background-color: #f1f1f1;
-            color: #444;
-            cursor: pointer;
-            padding: 10px;
-            width: 100%;
-            border: none;
-            text-align: left;
-            outline: none;
-            font-size: 15px;
-        }
-        .active, .collapsible:hover {
-            background-color: #ddd;
-        }
-        .content {
-            padding: 0 10px;
-            display: none;
-            overflow: hidden;
-            background-color: #f9f9f9;
-        }
-    </style>
 </head>
 <body>
 
@@ -53,43 +31,38 @@
             <option>December</option>
         </select>
 
-        <button class="collapsible">Electricity</button>
-        <div class="content">
-            <input type="number" id="elec_prev" placeholder="Previous Reading">
-            <input type="number" id="elec_curr" placeholder="Current Reading">
-            <input type="number" id="elec_unit_charge" placeholder="Unit Charge (₹)">
-        </div>
+        <h3>Electricity</h3>
+        <input type="number" id="elec_prev" placeholder="Previous Reading">
+        <input type="number" id="elec_curr" placeholder="Current Reading">
+        <input type="number" id="elec_unit_charge" placeholder="Unit Charge (₹)">
 
-        <button class="collapsible">Pump Charges</button>
-        <div class="content">
-            <div class="optional">
-                <input type="checkbox" id="include_pump">
-                <label for="include_pump">Include Pump Charges</label>
-            </div>
-            <input type="number" id="pump_prev" placeholder="Previous Reading" disabled>
-            <input type="number" id="pump_curr" placeholder="Current Reading" disabled>
-            <input type="number" id="pump_unit_charge" placeholder="Unit Charge (₹)" disabled>
-            <input type="number" id="num_people" placeholder="Number of People Sharing" disabled>
+        <h3>Pump Charges</h3>
+        <div class="optional">
+            <input type="checkbox" id="include_pump">
+            <label for="include_pump">Include Pump Charges</label>
         </div>
+        <input type="number" id="pump_prev" placeholder="Previous Reading">
+        <input type="number" id="pump_curr" placeholder="Current Reading">
+        <input type="number" id="pump_unit_charge" placeholder="Unit Charge (₹)">
+        <input type="number" id="num_people" placeholder="Number of People Sharing">
 
-        <button class="collapsible">Rent & Adjustments</button>
-        <div class="content">
-            <input type="number" id="rent_amount" placeholder="Rent (₹)">
-            <input type="number" id="prev_due" placeholder="Previous Due (₹)" value="0">
-            <input type="number" id="prev_advance" placeholder="Previous Advance (₹)" value="0">
-        </div>
+        <h3>Rent & Adjustments</h3>
+        <input type="number" id="rent_amount" placeholder="Rent (₹)">
+        <input type="number" id="prev_due" placeholder="Previous Due (₹)" value="0">
+        <input type="number" id="prev_advance" placeholder="Previous Advance (₹)" value="0">
 
-        <button class="collapsible">Additional Room (Optional)</button>
-        <div class="content">
-            <div class="optional">
-                <input type="checkbox" id="include_room">
-                <label for="include_room">Include Additional Room Charges</label>
-            </div>
-            <input type="text" id="room_name" placeholder="Room Name (Optional)" disabled>
-            <input type="number" id="room_prev" placeholder="Room Previous Reading" disabled>
-            <input type="number" id="room_curr" placeholder="Room Current Reading" disabled>
-            <input type="number" id="room_unit_charge" placeholder="Room Unit Charge (₹)" disabled>
+        <h3>Additional Room (Optional)</h3>
+        <div class="optional">
+            <input type="checkbox" id="include_room">
+            <label for="include_room">Include Additional Room Charges</label>
         </div>
+        <input type="text" id="room_name" placeholder="Room Name (Optional)">
+        <input type="number" id="room_prev" placeholder="Room Previous Reading">
+        <input type="number" id="room_curr" placeholder="Room Current Reading">
+        <input type="number" id="room_unit_charge" placeholder="Room Unit Charge (₹)">
+
+        <h3>Maintenance (Optional)</h3>
+        <input type="number" id="maintenance_charge" placeholder="Maintenance Charges (₹)">
 
         <div>
             <input type="checkbox" id="show_calculation" checked>
@@ -112,6 +85,7 @@
             <p><strong>Electricity Calculation:</strong> <span id="elec_calc" class="monospace"></span></p>
             <p id="pump_calc_section" style="display: none;"><strong>Pump Calculation:</strong> <span id="pump_calc" class="monospace"></span></p>
             <p id="room_calc_section" style="display: none;"><strong>Additional Room Calculation:</strong> <span id="room_calc" class="monospace"></span></p>
+            <p id="maintenance_calc_section" style="display: none;"><strong>Maintenance Charges:</strong> <span id="maintenance_calc" class="monospace"></span></p>
         </div>
 
         <h3>Bill Breakdown</h3>
@@ -136,6 +110,10 @@
                 <td>Previous Advance</td>
                 <td id="advance_display"></td>
             </tr>
+            <tr>
+                <td>Maintenance</td>
+                <td id="maintenance_display"></td>
+            </tr>
             <tr class="total">
                 <td>Total</td>
                 <td id="total_amount"></td>
@@ -144,22 +122,8 @@
     </div>
 
     <script>
-        // Function to handle collapsible sections
-        var coll = document.getElementsByClassName("collapsible");
-        for (let i = 0; i < coll.length; i++) {
-            coll[i].addEventListener("click", function() {
-                this.classList.toggle("active");
-                var content = this.nextElementSibling;
-                if (content.style.display === "block") {
-                    content.style.display = "none";
-                } else {
-                    content.style.display = "block";
-                }
-            });
-        }
-
         function generateBill() {
-            // Get inputs and treat empty fields as zero
+            // Get inputs and default empty fields to 0
             let tenantName = document.getElementById('tenant_name').value || "N/A";
             let month = document.getElementById('billing_month').value || "N/A";
             let elecPrev = parseFloat(document.getElementById('elec_prev').value) || 0;
@@ -168,13 +132,14 @@
             let pumpPrev = parseFloat(document.getElementById('pump_prev').value) || 0;
             let pumpCurr = parseFloat(document.getElementById('pump_curr').value) || 0;
             let pumpUnitCharge = parseFloat(document.getElementById('pump_unit_charge').value) || 0;
-            let numPeople = parseFloat(document.getElementById('num_people').value) || 1;  // default to 1 to avoid division by zero
+            let numPeople = parseFloat(document.getElementById('num_people').value) || 0;
             let rentAmount = parseFloat(document.getElementById('rent_amount').value) || 0;
             let prevDue = parseFloat(document.getElementById('prev_due').value) || 0;
             let prevAdvance = parseFloat(document.getElementById('prev_advance').value) || 0;
             let roomPrev = parseFloat(document.getElementById('room_prev').value) || 0;
             let roomCurr = parseFloat(document.getElementById('room_curr').value) || 0;
             let roomUnitCharge = parseFloat(document.getElementById('room_unit_charge').value) || 0;
+            let maintenanceCharge = parseFloat(document.getElementById('maintenance_charge').value) || 0;
 
             // Calculations
             let unitCharges = (elecCurr - elecPrev) * elecUnitCharge;
@@ -182,7 +147,7 @@
             let roomCharges = (roomCurr - roomPrev) * roomUnitCharge;
 
             let totalUnitCharges = unitCharges + (document.getElementById('include_pump').checked ? pumpCharges : 0) + (document.getElementById('include_room').checked ? roomCharges : 0);
-            let totalBill = totalUnitCharges + rentAmount + prevDue - prevAdvance;
+            let totalBill = totalUnitCharges + rentAmount + prevDue - prevAdvance + maintenanceCharge;
 
             // Display Bill
             document.getElementById('bill_tenant').textContent = tenantName;
@@ -190,11 +155,13 @@
             document.getElementById('elec_calc').textContent = `(${elecCurr} - ${elecPrev}) × ${elecUnitCharge} = ₹${unitCharges.toFixed(2)}`;
             document.getElementById('pump_calc').textContent = document.getElementById('include_pump').checked ? `(${pumpCurr} - ${pumpPrev}) × ${pumpUnitCharge} ÷ ${numPeople} = ₹${pumpCharges.toFixed(2)}` : 'N/A';
             document.getElementById('room_calc').textContent = document.getElementById('include_room').checked ? `(${roomCurr} - ${roomPrev}) × ${roomUnitCharge} = ₹${roomCharges.toFixed(2)}` : 'N/A';
+            document.getElementById('maintenance_calc').textContent = maintenanceCharge > 0 ? `₹${maintenanceCharge.toFixed(2)}` : 'N/A';
 
             document.getElementById('unit_amount').textContent = `₹${totalUnitCharges.toFixed(2)}`;
             document.getElementById('rent_display').textContent = `₹${rentAmount.toFixed(2)}`;
             document.getElementById('due_display').textContent = `₹${prevDue.toFixed(2)}`;
             document.getElementById('advance_display').textContent = `₹${prevAdvance.toFixed(2)}`;
+            document.getElementById('maintenance_display').textContent = `₹${maintenanceCharge.toFixed(2)}`;
             document.getElementById('total_amount').textContent = `₹${totalBill.toFixed(2)}`;
 
             // Toggle calculation details visibility
@@ -213,6 +180,13 @@
                     document.getElementById('room_calc_section').style.display = 'block';
                 } else {
                     document.getElementById('room_calc_section').style.display = 'none';
+                }
+
+                // Show/Hide maintenance charges section
+                if (maintenanceCharge > 0) {
+                    document.getElementById('maintenance_calc_section').style.display = 'block';
+                } else {
+                    document.getElementById('maintenance_calc_section').style.display = 'none';
                 }
 
             } else {
