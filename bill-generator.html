@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="light dark">
+<title>Rent Bill Generator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@600;700;800&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#F4F5F7; --panel:#FFFFFF; --panel-alt:#F7F8FA; --border:#E4E6EB;
+    --text:#171A21; --text-muted:#6B7280;
+    --accent:#4F46E5; --accent-rgb:79,70,229;
+    --bill-accent:#4F46E5; --bill-accent-rgb:79,70,229;
+    --danger:#DC2626;
+    --font-display:'Manrope', system-ui, sans-serif;
+    --font-body:'Inter', system-ui, sans-serif;
+    --font-mono:'JetBrains Mono', ui-monospace, monospace;
+  }
+  :root[data-theme="dark"] {
+    --bg:#0C0D11; --panel:#17191F; --panel-alt:#1D2027; --border:#292C35;
+    --text:#EDEEF2; --text-muted:#8B90A0;
+    --accent:#8583F5; --accent-rgb:133,131,245;
+    --danger:#F87171;
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--text); font-family:var(--font-body); -webkit-font-smoothing:antialiased; }
+  .shell { max-width:1120px; margin:0 auto; padding:28px 20px 80px; }
+  .app-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:24px; }
+  .app-header h1 { font-family:var(--font-display); font-size:22px; font-weight:800; margin:0; letter-spacing:-.01em; }
+  .app-header p { margin:2px 0 0; font-size:13px; color:var(--text-muted); }
+  .icon-btn { width:38px; height:38px; border-radius:50%; border:1px solid var(--border); background:var(--panel); display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:16px; }
+  .layout { display:grid; grid-template-columns:400px 1fr; gap:24px; align-items:start; }
+  @media (max-width:880px) { .layout { grid-template-columns:1fr; } }
+
+  .card { background:var(--panel); border:1px solid var(--border); border-radius:16px; padding:22px; }
+  .eyebrow { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.08em; color:var(--accent); margin:0 0 10px; }
+
+  .field { margin-bottom:14px; }
+  .field-row { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  label { display:block; font-size:11.5px; font-weight:600; text-transform:uppercase; letter-spacing:.05em; color:var(--text-muted); margin-bottom:6px; }
+  input[type="text"], input[type="number"], input[type="month"] {
+    width:100%; padding:10px 11px; font-size:14.5px; font-family:var(--font-body); color:var(--text);
+    background:var(--panel-alt); border:1px solid var(--border); border-radius:8px;
+    transition:border-color .15s, box-shadow .15s;
+  }
+  input:focus-visible { outline:none; border-color:var(--accent); box-shadow:0 0 0 3px rgba(var(--accent-rgb),.22); }
+  .section-label { font-size:12px; font-weight:700; color:var(--text); margin:18px 0 10px; padding-top:14px; border-top:1px dashed var(--border); }
+  .section-label:first-of-type { border-top:none; padding-top:0; margin-top:4px; }
+  .opt { color:var(--text-muted); font-weight:500; text-transform:none; letter-spacing:0; font-size:11.5px; }
+
+  [role="group"].seg { display:flex; flex-wrap:wrap; gap:6px; background:var(--panel-alt); border:1px solid var(--border); border-radius:10px; padding:4px; margin-bottom:18px; }
+  .seg button { flex:1 1 72px; padding:9px 6px; font-family:var(--font-body); font-weight:600; font-size:12px; border:none; background:transparent; color:var(--text-muted); border-radius:7px; cursor:pointer; transition:background .15s, color .15s; }
+  .seg button.active { background:var(--accent); color:#fff; }
+
+  .hamburger-btn { display:flex; align-items:center; gap:9px; width:100%; padding:10px 12px; background:var(--panel-alt); border:1px solid var(--border); border-radius:9px; color:var(--text); font-family:var(--font-body); font-weight:600; font-size:13.5px; cursor:pointer; margin-bottom:14px; }
+  .hamburger-btn:hover { border-color:var(--accent); }
+  .hamburger-icon { font-size:15px; line-height:1; }
+  .style-menu-panel { background:var(--panel-alt); border:1px solid var(--border); border-radius:10px; padding:14px; margin:-6px 0 14px; }
+  .style-menu-panel[hidden] { display:none; }
+  .style-menu-panel .field:last-child { margin-bottom:0; }
+
+  .checkbox-row { display:flex; align-items:center; gap:9px; font-size:13.5px; color:var(--text); margin:0 0 14px; cursor:pointer; user-select:none; }
+  .checkbox-row input { width:17px; height:17px; accent-color:var(--accent); cursor:pointer; flex-shrink:0; }
+  .dimmed { opacity:.45; transition:opacity .15s; }
+
+  .btn-primary {
+    width:100%; padding:12px 16px; background:var(--accent); color:#fff; border:none; border-radius:10px;
+    font-family:var(--font-body); font-weight:700; font-size:14.5px; cursor:pointer; margin-top:6px;
+    transition:box-shadow .15s, transform .1s;
+  }
+  .btn-primary:hover { box-shadow:0 10px 22px -10px rgba(var(--accent-rgb),.65); }
+  .btn-primary:active { transform:scale(.98); }
+  .btn-secondary {
+    width:100%; padding:11px 16px; background:transparent; color:var(--text); border:1px solid var(--border);
+    border-radius:10px; font-family:var(--font-body); font-weight:600; font-size:14px; cursor:pointer; margin-top:10px;
+  }
+  .btn-secondary:hover { border-color:var(--accent); color:var(--accent); }
+
+  .receipt-card { max-width:440px; margin:0 auto; }
+  .receipt { background:var(--panel); border-radius:14px; padding:26px 22px 22px; box-shadow:0 20px 40px -18px rgba(0,0,0,.22); border:1px solid var(--border); }
+  .receipt.pulse { animation:pulseGlow .6s ease-out; }
+  @keyframes pulseGlow {
+    0% { box-shadow:0 20px 40px -18px rgba(0,0,0,.22), 0 0 0 0 rgba(var(--bill-accent-rgb),.35); }
+    100% { box-shadow:0 20px 40px -18px rgba(0,0,0,.22), 0 0 0 14px rgba(var(--bill-accent-rgb),0); }
+  }
+  .r-head { display:flex; justify-content:space-between; align-items:baseline; }
+  .r-kind { font-family:var(--font-display); font-size:12px; font-weight:800; letter-spacing:.09em; color:var(--bill-accent); text-transform:uppercase; }
+  .r-date { font-size:11.5px; color:var(--text-muted); font-family:var(--font-mono); }
+  .r-name { font-family:var(--font-display); font-size:21px; font-weight:800; margin:8px 0 0; letter-spacing:-.01em; }
+  .r-month { font-size:13px; color:var(--text-muted); margin:2px 0 0; }
+  .r-div { border-top:1px dashed var(--border); margin:16px 0; }
+  .r-row { display:flex; justify-content:space-between; gap:14px; padding:7px 0; font-size:13.5px; }
+  .r-label { color:var(--text-muted); }
+  .r-amt { font-family:var(--font-mono); font-weight:600; font-variant-numeric:tabular-nums; white-space:nowrap; }
+  .r-total { font-size:16px; font-weight:700; }
+  .r-total .r-amt { font-size:17px; color:var(--bill-accent); }
+
+  .swatch-row { display:flex; gap:10px; margin-bottom:14px; }
+  .swatch { width:26px; height:26px; border-radius:50%; border:none; background:var(--sw); cursor:pointer; padding:0; box-shadow:0 0 0 1px var(--border); }
+  .swatch.active { box-shadow:0 0 0 2px var(--panel), 0 0 0 4px var(--sw); }
+  .r-warn { font-size:12px; color:var(--danger); margin:2px 0 10px; }
+
+  .inv-head { display:flex; justify-content:space-between; align-items:flex-start; gap:12px; margin-bottom:16px; padding-bottom:14px; border-bottom:2px solid var(--text); }
+  .inv-label { font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:var(--text-muted); margin:0 0 4px; }
+  .inv-meta { text-align:right; }
+  .inv-meta .r-kind { display:block; margin-bottom:4px; }
+  .inv-table { width:100%; border-collapse:collapse; font-size:13.5px; }
+  .inv-table td { padding:9px 0; border-bottom:1px solid var(--border); }
+  .inv-table td.inv-amt { text-align:right; font-family:var(--font-mono); font-variant-numeric:tabular-nums; white-space:nowrap; padding-left:12px; }
+  .inv-table tfoot td { border-top:2px solid var(--text); border-bottom:none; font-weight:700; font-size:16px; padding-top:14px; }
+  .inv-table tfoot td.inv-amt { color:var(--bill-accent); font-size:17px; }
+
+  .inv-modern-head { background:var(--bill-accent); color:#fff; padding:20px 22px; border-radius:13px 13px 0 0; margin:-26px -22px 18px; }
+  .inv-modern-kind { display:block; font-size:11px; font-weight:800; letter-spacing:.09em; text-transform:uppercase; opacity:.85; }
+  .inv-modern-name { font-family:var(--font-display); font-size:20px; font-weight:800; margin:6px 0 4px; color:#fff; }
+  .inv-modern-meta { display:flex; justify-content:space-between; font-size:12px; opacity:.85; }
+  .inv-modern-row { display:flex; justify-content:space-between; gap:12px; padding:9px 10px; font-size:13.5px; border-radius:6px; }
+  .inv-modern-row:nth-child(odd) { background:var(--panel-alt); }
+  .inv-modern-amt { font-family:var(--font-mono); font-variant-numeric:tabular-nums; white-space:nowrap; }
+  .inv-modern-total { display:flex; justify-content:space-between; margin-top:14px; padding:14px; background:var(--panel-alt); border-radius:10px; font-weight:700; font-size:16px; }
+  .inv-modern-total span:last-child { color:var(--bill-accent); font-family:var(--font-mono); font-size:17px; }
+
+  .inv-min-head { margin-bottom:22px; }
+  .inv-min-meta { display:flex; justify-content:space-between; margin-top:12px; }
+  .inv-min-row { display:flex; justify-content:space-between; gap:12px; padding:11px 0; font-size:14px; }
+  .inv-min-amt { font-family:var(--font-mono); font-variant-numeric:tabular-nums; white-space:nowrap; }
+  .inv-min-total { display:flex; justify-content:space-between; margin-top:10px; padding-top:16px; border-top:1.5px solid var(--text); font-weight:700; font-size:17px; }
+  .inv-min-total span:last-child { color:var(--bill-accent); font-family:var(--font-mono); }
+
+  .inv-ledger-head { margin-bottom:16px; }
+  .inv-ledger-meta { display:flex; justify-content:space-between; margin-top:8px; gap:10px; }
+  .inv-ledger-table { width:100%; border-collapse:collapse; font-size:13px; border:1px solid var(--border); }
+  .inv-ledger-table th { text-align:left; font-size:10.5px; text-transform:uppercase; letter-spacing:.05em; color:var(--text-muted); padding:8px 10px; border:1px solid var(--border); background:var(--panel-alt); }
+  .inv-ledger-table td { padding:8px 10px; border:1px solid var(--border); font-family:var(--font-mono); }
+  .inv-ledger-table th:first-child, .inv-ledger-table td:first-child { width:30px; text-align:center; color:var(--text-muted); }
+  .inv-ledger-table th:last-child, .inv-ledger-table td:last-child { text-align:right; }
+  .inv-ledger-table tfoot td { font-weight:700; font-size:14.5px; }
+  .inv-ledger-table tfoot td:last-child { color:var(--bill-accent); font-size:16px; }
+
+  .inv-stmt-info { margin:10px 0 16px; }
+  .inv-stmt-meta-table { width:100%; border-collapse:collapse; font-size:12.5px; }
+  .inv-stmt-meta-table td { padding:4px 0; }
+  .inv-stmt-meta-table td:first-child { color:var(--text-muted); width:45%; }
+  .inv-stmt-meta-table td:last-child { font-weight:600; text-align:right; }
+  .inv-stmt-table { width:100%; border-collapse:collapse; font-size:13.5px; }
+  .inv-stmt-table td { padding:8px 0; border-bottom:1px solid var(--border); }
+  .inv-stmt-table td:last-child { text-align:right; font-family:var(--font-mono); font-variant-numeric:tabular-nums; white-space:nowrap; }
+  .inv-stmt-table tfoot td { border-top:3px double var(--text); border-bottom:none; font-weight:700; font-size:16px; padding-top:12px; }
+  .inv-stmt-table tfoot td:last-child { color:var(--bill-accent); font-size:17px; }
+
+
+  .history-wrap { margin-top:22px; }
+  .history-wrap h3 { font-family:var(--font-display); font-size:13px; margin:0 0 10px; }
+  .hist-item { display:flex; align-items:center; gap:8px; }
+  .hist-load {
+    flex:1; text-align:left; display:flex; flex-direction:column; gap:1px; padding:9px 11px;
+    background:var(--panel-alt); border:1px solid var(--border); border-radius:8px; cursor:pointer; font-family:var(--font-body);
+  }
+  .hist-load:hover { border-color:var(--accent); }
+  .hist-load strong { font-size:13px; }
+  .hist-load span { font-size:11.5px; color:var(--text-muted); font-family:var(--font-mono); }
+  .hist-del { width:32px; height:32px; flex-shrink:0; border:1px solid var(--border); background:var(--panel); border-radius:8px; cursor:pointer; color:var(--text-muted); font-size:16px; line-height:1; }
+  .hist-del:hover { color:var(--danger); border-color:var(--danger); }
+  .hist-item + .hist-item { margin-top:8px; }
+  .empty { font-size:13px; color:var(--text-muted); margin:0; }
+
+  .toast {
+    position:fixed; left:50%; bottom:24px; transform:translate(-50%,12px); opacity:0; pointer-events:none;
+    background:var(--text); color:var(--bg); padding:11px 14px; border-radius:10px; font-size:13.5px;
+    display:flex; align-items:center; gap:14px; transition:opacity .18s, transform .18s; z-index:20;
+  }
+  .toast.show { opacity:1; transform:translate(-50%,0); pointer-events:auto; }
+  .toast button { background:none; border:none; color:var(--accent); font-weight:700; cursor:pointer; font-size:13.5px; }
+
+  @media (prefers-reduced-motion:reduce) { * { animation:none !important; transition:none !important; } }
+
+  @media print {
+    @page { size:portrait; margin:14mm 12mm; }
+    body { background:#fff; color:#111; }
+    .no-print, .app-header, .eyebrow { display:none !important; }
+    .layout { display:block; }
+    .shell { padding:0 8%; max-width:none; }
+    .receipt-card { max-width:100%; margin:0; }
+    .receipt { box-shadow:none; color:#111; border-color:#ccc; }
+    .r-label { color:#444; }
+  }
+</style>
+</head>
+<body>
+<div class="shell">
+  <div class="app-header">
+    <div>
+      <h1>Rent Bill Generator</h1>
+      <p>Rent, electricity, pump &amp; room charges — one bill</p>
+    </div>
+    <button class="icon-btn no-print" id="themeToggle" aria-label="Toggle dark mode">🌙</button>
+  </div>
+
+  <div class="layout">
+    <div class="card no-print">
+      <div role="group" aria-label="Bill type" class="seg">
+        <button type="button" id="billTypeRentBtn">Rent</button>
+        <button type="button" id="billTypeElecBtn">Electricity</button>
+        <button type="button" id="billTypeCustomBtn" class="active">Custom</button>
+      </div>
+      <div class="field">
+        <label for="billTitleInput">Bill Title</label>
+        <input type="text" id="billTitleInput" class="live-input" value="Rent Bill">
+      </div>
+      <button type="button" class="hamburger-btn no-print" id="styleMenuBtn" aria-expanded="false" aria-controls="styleMenuPanel">
+        <span class="hamburger-icon">☰</span> Bill Style
+      </button>
+      <div class="style-menu-panel" id="styleMenuPanel" hidden>
+        <div class="field">
+          <label>Bill Accent</label>
+          <div class="swatch-row" id="swatchRow" role="group" aria-label="Bill accent color">
+            <button type="button" class="swatch active" data-color="indigo" style="--sw:#4F46E5" aria-label="Indigo"></button>
+            <button type="button" class="swatch" data-color="emerald" style="--sw:#059669" aria-label="Emerald"></button>
+            <button type="button" class="swatch" data-color="amber" style="--sw:#D97706" aria-label="Amber"></button>
+            <button type="button" class="swatch" data-color="rose" style="--sw:#E11D48" aria-label="Rose"></button>
+            <button type="button" class="swatch" data-color="slate" style="--sw:#334155" aria-label="Slate"></button>
+          </div>
+        </div>
+        <div class="field">
+          <label>Invoice Style</label>
+          <div role="group" aria-label="Invoice style" class="seg">
+            <button type="button" id="structClassicBtn" class="active">Classic</button>
+            <button type="button" id="structModernBtn">Modern</button>
+            <button type="button" id="structMinimalBtn">Minimal</button>
+            <button type="button" id="structLedgerBtn">Ledger</button>
+            <button type="button" id="structStatementBtn">Statement</button>
+          </div>
+        </div>
+      </div>
+      <div class="field">
+        <label for="nameInput">Tenant Name</label>
+        <input type="text" id="nameInput" class="live-input" placeholder="Tenant name">
+      </div>
+      <div class="field">
+        <label for="monthInput">Billing Month</label>
+        <input type="month" id="monthInput" class="live-input">
+      </div>
+
+      <div class="section-label">Electricity</div>
+      <label class="checkbox-row"><input type="checkbox" id="elecIncluded" class="live-input" checked> Include Electricity Charges</label>
+      <div id="elecFieldsWrap">
+        <div class="field-row">
+          <div class="field"><label for="elecPrevInput">Previous Reading</label><input type="number" min="0" step="0.01" id="elecPrevInput" class="live-input" value="0"></div>
+          <div class="field"><label for="elecCurrInput">Current Reading</label><input type="number" min="0" step="0.01" id="elecCurrInput" class="live-input" value="0"></div>
+        </div>
+        <div class="field"><label for="elecRateInput">Unit Charge (₹)</label><input type="number" min="0" step="0.01" id="elecRateInput" class="live-input" value="0"></div>
+      </div>
+
+      <div class="section-label">Pump Charges</div>
+      <label class="checkbox-row"><input type="checkbox" id="pumpIncluded" class="live-input"> Include Pump Charges</label>
+      <div id="pumpFieldsWrap" class="dimmed">
+        <div class="field-row">
+          <div class="field"><label for="pumpPrevInput">Previous Reading</label><input type="number" min="0" step="0.01" id="pumpPrevInput" class="live-input" value="0"></div>
+          <div class="field"><label for="pumpCurrInput">Current Reading</label><input type="number" min="0" step="0.01" id="pumpCurrInput" class="live-input" value="0"></div>
+        </div>
+        <div class="field-row">
+          <div class="field"><label for="pumpRateInput">Unit Charge (₹)</label><input type="number" min="0" step="0.01" id="pumpRateInput" class="live-input" value="0"></div>
+          <div class="field"><label for="pumpPeopleInput">People Sharing</label><input type="number" min="1" step="1" id="pumpPeopleInput" class="live-input" value="1"></div>
+        </div>
+      </div>
+
+      <div class="section-label">Rent &amp; Adjustments</div>
+      <label class="checkbox-row"><input type="checkbox" id="rentIncluded" class="live-input" checked> Include Rent &amp; Adjustments</label>
+      <div id="rentFieldsWrap">
+        <div class="field"><label for="rentInput">Rent (₹)</label><input type="number" min="0" step="0.01" id="rentInput" class="live-input" value="0"></div>
+        <div class="field-row">
+          <div class="field"><label for="prevDueInput">Previous Due (₹)</label><input type="number" min="0" step="0.01" id="prevDueInput" class="live-input" value="0"></div>
+          <div class="field"><label for="prevAdvanceInput">Previous Advance (₹)</label><input type="number" min="0" step="0.01" id="prevAdvanceInput" class="live-input" value="0"></div>
+        </div>
+      </div>
+
+      <div class="section-label">Additional Room <span class="opt">(Optional)</span></div>
+      <label class="checkbox-row"><input type="checkbox" id="roomIncluded" class="live-input"> Include Additional Room Charges</label>
+      <div id="roomFieldsWrap" class="dimmed">
+        <div class="field"><label for="roomNameInput">Room Name (Optional)</label><input type="text" id="roomNameInput" class="live-input" placeholder="e.g. Shop, Garage"></div>
+        <div class="field-row">
+          <div class="field"><label for="roomPrevInput">Previous Reading</label><input type="number" min="0" step="0.01" id="roomPrevInput" class="live-input" value="0"></div>
+          <div class="field"><label for="roomCurrInput">Current Reading</label><input type="number" min="0" step="0.01" id="roomCurrInput" class="live-input" value="0"></div>
+        </div>
+        <div class="field"><label for="roomRateInput">Unit Charge (₹)</label><input type="number" min="0" step="0.01" id="roomRateInput" class="live-input" value="0"></div>
+      </div>
+
+      <div class="section-label">Maintenance <span class="opt">(Optional)</span></div>
+      <label class="checkbox-row"><input type="checkbox" id="maintenanceIncluded" class="live-input" checked> Include Maintenance Charges</label>
+      <div id="maintFieldsWrap">
+        <div class="field"><label for="maintenanceInput">Maintenance Charges (₹)</label><input type="number" min="0" step="0.01" id="maintenanceInput" class="live-input" value="0"></div>
+      </div>
+
+      <label class="checkbox-row"><input type="checkbox" id="showDetails" class="live-input" checked> Show Calculation Details</label>
+
+      <button class="btn-primary" id="generateBtn">Generate Bill</button>
+    </div>
+
+    <div>
+      <p class="eyebrow" style="text-align:center;">Live preview</p>
+      <div id="receiptWrap" class="receipt-card">
+        <div class="receipt" id="receiptCard">
+          <div id="receiptEl"></div>
+        </div>
+      </div>
+      <div style="max-width:440px; margin:0 auto;">
+        <button class="btn-secondary no-print" id="printBtn">Download PDF</button>
+      </div>
+
+      <div class="history-wrap no-print" style="max-width:440px; margin-left:auto; margin-right:auto;">
+        <h3>Recent bills</h3>
+        <div id="historyList"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast no-print" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+  const $ = id => document.getElementById(id);
+  const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  let history = [];
+  let lastDeleted = null;
+  let toastTimer = null;
+  let billType = 'custom';
+
+  function num(id){ const v = parseFloat($(id).value); return isNaN(v) ? 0 : v; }
+
+  function formatMonthInput(v){
+    if(!v) return 'Month not set';
+    const parts = v.split('-');
+    const idx = parseInt(parts[1],10) - 1;
+    return (MONTHS[idx] || '') + ' ' + parts[0];
+  }
+
+  function fmt(n){
+    const neg = n < 0;
+    const v = Math.abs(Math.round(n*100)/100).toLocaleString('en-IN', {maximumFractionDigits:2});
+    return (neg ? '−₹' : '₹') + v;
+  }
+
+  function escapeHtml(str){
+    const d = document.createElement('div');
+    d.textContent = String(str);
+    return d.innerHTML;
+  }
+
+  function currentData(){
+    return {
+      name: $('nameInput').value.trim() || 'Tenant',
+      month: $('monthInput').value,
+      elecOn: $('elecIncluded').checked,
+      elecPrev: num('elecPrevInput'), elecCurr: num('elecCurrInput'), elecRate: num('elecRateInput'),
+      pumpOn: $('pumpIncluded').checked,
+      pumpPrev: num('pumpPrevInput'), pumpCurr: num('pumpCurrInput'), pumpRate: num('pumpRateInput'),
+      pumpPeople: num('pumpPeopleInput') || 1,
+      rentOn: $('rentIncluded').checked,
+      rent: num('rentInput'), prevDue: num('prevDueInput'), prevAdvance: num('prevAdvanceInput'),
+      roomOn: $('roomIncluded').checked,
+      roomName: $('roomNameInput').value.trim() || 'Additional Room',
+      roomPrev: num('roomPrevInput'), roomCurr: num('roomCurrInput'), roomRate: num('roomRateInput'),
+      maintenanceOn: $('maintenanceIncluded').checked,
+      maintenance: num('maintenanceInput'),
+      showDetails: $('showDetails').checked,
+      billTitle: $('billTitleInput').value.trim() || 'Rent Bill'
+    };
+  }
+
+  function buildBill(d){
+    const elecUnits = Math.max(0, d.elecCurr - d.elecPrev);
+    const elecAmt = elecUnits * d.elecRate;
+    const pumpUnits = Math.max(0, d.pumpCurr - d.pumpPrev);
+    const pumpTotal = pumpUnits * d.pumpRate;
+    const pumpShare = d.pumpPeople > 0 ? pumpTotal / d.pumpPeople : pumpTotal;
+    const roomUnits = Math.max(0, d.roomCurr - d.roomPrev);
+    const roomAmt = roomUnits * d.roomRate;
+
+    const rows = [];
+    if (d.elecOn){
+      rows.push({
+        label: d.showDetails ? ('Electricity · ' + d.elecCurr + '-' + d.elecPrev + ' = ' + elecUnits + ' units × ₹' + d.elecRate) : 'Electricity',
+        amt: elecAmt
+      });
+    }
+    if (d.pumpOn){
+      rows.push({
+        label: d.showDetails ? ('Pump · ' + d.pumpCurr + '-' + d.pumpPrev + ' = ' + pumpUnits + ' units × ₹' + d.pumpRate + ' ÷ ' + d.pumpPeople + ' people') : 'Pump Charges',
+        amt: pumpShare
+      });
+    }
+    if (d.roomOn){
+      rows.push({
+        label: d.showDetails ? (d.roomName + ' · ' + d.roomCurr + '-' + d.roomPrev + ' = ' + roomUnits + ' units × ₹' + d.roomRate) : d.roomName,
+        amt: roomAmt
+      });
+    }
+    if (d.rentOn) rows.push({label:'Rent', amt:d.rent});
+    if (d.maintenanceOn && d.maintenance) rows.push({label:'Maintenance', amt:d.maintenance});
+    if (d.rentOn && d.prevDue) rows.push({label:'Previous Due', amt:d.prevDue});
+    if (d.rentOn && d.prevAdvance) rows.push({label:'Previous Advance', amt:-d.prevAdvance});
+    const total = (d.elecOn ? elecAmt : 0) + (d.pumpOn ? pumpShare : 0) + (d.roomOn ? roomAmt : 0)
+      + (d.rentOn ? d.rent + d.prevDue - d.prevAdvance : 0) + (d.maintenanceOn ? d.maintenance : 0);
+    const warn = (d.elecOn && d.elecCurr < d.elecPrev) || (d.pumpOn && d.pumpCurr < d.pumpPrev) || (d.roomOn && d.roomCurr < d.roomPrev);
+    const title = d.billTitle || 'Rent Bill';
+    return {title:title, rows:rows, total:total, warn:warn};
+  }
+
+  function renderReceiptHTML(data, bill){
+    if (billStructure === 'modern') return renderModernStructure(data, bill);
+    if (billStructure === 'minimal') return renderMinimalStructure(data, bill);
+    if (billStructure === 'ledger') return renderLedgerStructure(data, bill);
+    if (billStructure === 'statement') return renderStatementStructure(data, bill);
+    return renderClassicStructure(data, bill);
+  }
+
+  function renderClassicStructure(data, bill){
+    const rowsHTML = bill.rows.map(function(r){
+      return '<tr><td>' + escapeHtml(r.label) + '</td><td class="inv-amt">' + fmt(r.amt) + '</td></tr>';
+    }).join('');
+    const warn = bill.warn ? '<p class="r-warn">A current reading is lower than its previous reading — check meter values.</p>' : '';
+    const today = new Date();
+    const dateStr = today.toLocaleDateString('en-IN', {day:'2-digit', month:'short', year:'numeric'});
+    $('receiptEl').innerHTML =
+      '<div class="inv-head">' +
+        '<div><p class="inv-label">Bill To</p><h2 class="r-name">' + escapeHtml(data.name) + '</h2><p class="r-month">' + formatMonthInput(data.month) + '</p></div>' +
+        '<div class="inv-meta"><span class="r-kind">' + escapeHtml(bill.title) + '</span><span class="r-date">' + dateStr + '</span></div>' +
+      '</div>' +
+      warn +
+      '<table class="inv-table"><tbody>' + rowsHTML + '</tbody><tfoot><tr><td>Total Payable</td><td class="inv-amt">' + fmt(bill.total) + '</td></tr></tfoot></table>';
+  }
+
+  function renderModernStructure(data, bill){
+    const rowsHTML = bill.rows.map(function(r){
+      return '<div class="inv-modern-row"><span>' + escapeHtml(r.label) + '</span><span class="inv-modern-amt">' + fmt(r.amt) + '</span></div>';
+    }).join('');
+    const warn = bill.warn ? '<p class="r-warn">A current reading is lower than its previous reading — check meter values.</p>' : '';
+    const today = new Date();
+    const dateStr = today.toLocaleDateString('en-IN', {day:'2-digit', month:'short', year:'numeric'});
+    $('receiptEl').innerHTML =
+      '<div class="inv-modern-head">' +
+        '<span class="inv-modern-kind">' + escapeHtml(bill.title) + '</span>' +
+        '<h2 class="inv-modern-name">' + escapeHtml(data.name) + '</h2>' +
+        '<div class="inv-modern-meta"><span>' + formatMonthInput(data.month) + '</span><span>' + dateStr + '</span></div>' +
+      '</div>' +
+      warn +
+      rowsHTML +
+      '<div class="inv-modern-total"><span>Total Payable</span><span>' + fmt(bill.total) + '</span></div>';
+  }
+
+  function renderMinimalStructure(data, bill){
+    const rowsHTML = bill.rows.map(function(r){
+      return '<div class="inv-min-row"><span class="r-label">' + escapeHtml(r.label) + '</span><span class="inv-min-amt">' + fmt(r.amt) + '</span></div>';
+    }).join('');
+    const warn = bill.warn ? '<p class="r-warn">A current reading is lower than its previous reading — check meter values.</p>' : '';
+    const today = new Date();
+    const dateStr = today.toLocaleDateString('en-IN', {day:'2-digit', month:'short', year:'numeric'});
+    $('receiptEl').innerHTML =
+      '<div class="inv-min-head">' +
+        '<h2 class="r-name">' + escapeHtml(data.name) + '</h2>' +
+        '<div class="inv-min-meta"><span class="r-kind">' + escapeHtml(bill.title) + '</span><span class="r-date">' + dateStr + '</span></div>' +
+        '<p class="r-month">' + formatMonthInput(data.month) + '</p>' +
+      '</div>' +
+      warn +
+      rowsHTML +
+      '<div class="inv-min-total"><span>Total Payable</span><span>' + fmt(bill.total) + '</span></div>';
+  }
+
+  function renderStatementStructure(data, bill){
+    const rowsHTML = bill.rows.map(function(r){
+      return '<tr><td>' + escapeHtml(r.label) + '</td><td>' + fmt(r.amt) + '</td></tr>';
+    }).join('');
+    const warn = bill.warn ? '<p class="r-warn">A current reading is lower than its previous reading — check meter values.</p>' : '';
+    const today = new Date();
+    const dateStr = today.toLocaleDateString('en-IN', {day:'2-digit', month:'short', year:'numeric'});
+    $('receiptEl').innerHTML =
+      '<span class="r-kind">' + escapeHtml(bill.title) + '</span>' +
+      '<div class="inv-stmt-info"><table class="inv-stmt-meta-table">' +
+        '<tr><td>Bill To</td><td>' + escapeHtml(data.name) + '</td></tr>' +
+        '<tr><td>Billing Month</td><td>' + formatMonthInput(data.month) + '</td></tr>' +
+        '<tr><td>Statement Date</td><td>' + dateStr + '</td></tr>' +
+      '</table></div>' +
+      warn +
+      '<table class="inv-stmt-table"><tbody>' + rowsHTML + '</tbody><tfoot><tr><td>Total Payable</td><td>' + fmt(bill.total) + '</td></tr></tfoot></table>';
+  }
+
+  function renderLedgerStructure(data, bill){
+    const rowsHTML = bill.rows.map(function(r, i){
+      return '<tr><td>' + (i + 1) + '</td><td>' + escapeHtml(r.label) + '</td><td>' + fmt(r.amt) + '</td></tr>';
+    }).join('');
+    const warn = bill.warn ? '<p class="r-warn">A current reading is lower than its previous reading — check meter values.</p>' : '';
+    const today = new Date();
+    const dateStr = today.toLocaleDateString('en-IN', {day:'2-digit', month:'short', year:'numeric'});
+    $('receiptEl').innerHTML =
+      '<div class="inv-ledger-head">' +
+        '<h2 class="r-name">' + escapeHtml(data.name) + '</h2>' +
+        '<div class="inv-ledger-meta"><span class="r-kind">' + escapeHtml(bill.title) + '</span><span class="r-date">' + dateStr + ' · ' + formatMonthInput(data.month) + '</span></div>' +
+      '</div>' +
+      warn +
+      '<table class="inv-ledger-table"><thead><tr><th>No.</th><th>Description</th><th>Amount</th></tr></thead><tbody>' + rowsHTML + '</tbody>' +
+      '<tfoot><tr><td colspan="2">Total Payable</td><td>' + fmt(bill.total) + '</td></tr></tfoot></table>';
+  }
+
+  function syncDim(){
+    $('elecFieldsWrap').classList.toggle('dimmed', !$('elecIncluded').checked);
+    $('pumpFieldsWrap').classList.toggle('dimmed', !$('pumpIncluded').checked);
+    $('rentFieldsWrap').classList.toggle('dimmed', !$('rentIncluded').checked);
+    $('roomFieldsWrap').classList.toggle('dimmed', !$('roomIncluded').checked);
+    $('maintFieldsWrap').classList.toggle('dimmed', !$('maintenanceIncluded').checked);
+  }
+
+  function render(){
+    syncDim();
+    const data = currentData();
+    const bill = buildBill(data);
+    renderReceiptHTML(data, bill);
+  }
+
+  function flashReceipt(){
+    const el = $('receiptCard');
+    el.classList.remove('pulse');
+    void el.offsetWidth;
+    el.classList.add('pulse');
+  }
+
+  async function loadHistory(){
+    try {
+      const res = await window.storage.get('history', false);
+      if (res && res.value) return JSON.parse(res.value);
+      return [];
+    } catch(e){
+      return [];
+    }
+  }
+
+  async function persistHistory(){
+    try {
+      await window.storage.set('history', JSON.stringify(history), false);
+    } catch(e){
+      console.error('Storage save failed', e);
+    }
+  }
+
+  function renderHistory(){
+    const el = $('historyList');
+    if (!history.length){
+      el.innerHTML = '<p class="empty">No bills yet — generate one to see it here.</p>';
+      return;
+    }
+    el.innerHTML = history.map(function(h, i){
+      return '<div class="hist-item">' +
+        '<button type="button" class="hist-load" data-i="' + i + '">' +
+        '<strong>' + escapeHtml(h.data.name) + '</strong>' +
+        '<span>' + formatMonthInput(h.data.month) + ' · ' + fmt(h.total) + '</span>' +
+        '</button>' +
+        '<button type="button" class="hist-del" data-i="' + i + '" aria-label="Delete">×</button>' +
+        '</div>';
+    }).join('');
+  }
+
+  function loadFromHistory(i){
+    const h = history[i];
+    if (!h) return;
+    const d = h.data;
+    $('nameInput').value = d.name;
+    $('monthInput').value = d.month;
+    $('elecIncluded').checked = d.elecOn !== false;
+    $('elecPrevInput').value = d.elecPrev;
+    $('elecCurrInput').value = d.elecCurr;
+    $('elecRateInput').value = d.elecRate;
+    $('pumpIncluded').checked = !!d.pumpOn;
+    $('pumpPrevInput').value = d.pumpPrev;
+    $('pumpCurrInput').value = d.pumpCurr;
+    $('pumpRateInput').value = d.pumpRate;
+    $('pumpPeopleInput').value = d.pumpPeople;
+    $('rentIncluded').checked = d.rentOn !== false;
+    $('rentInput').value = d.rent;
+    $('prevDueInput').value = d.prevDue;
+    $('prevAdvanceInput').value = d.prevAdvance;
+    $('roomIncluded').checked = !!d.roomOn;
+    $('roomNameInput').value = d.roomName;
+    $('roomPrevInput').value = d.roomPrev;
+    $('roomCurrInput').value = d.roomCurr;
+    $('roomRateInput').value = d.roomRate;
+    $('maintenanceIncluded').checked = d.maintenanceOn !== false;
+    $('maintenanceInput').value = d.maintenance;
+    $('showDetails').checked = d.showDetails;
+    $('billTitleInput').value = d.billTitle || 'Rent Bill';
+    applyBillColor(h.billAccentColor || 'indigo');
+    applyBillStructure(h.billStructure || 'classic');
+    billType = h.billType || 'custom';
+    $('billTypeRentBtn').classList.toggle('active', billType === 'rent');
+    $('billTypeElecBtn').classList.toggle('active', billType === 'electricity');
+    $('billTypeCustomBtn').classList.toggle('active', billType === 'custom');
+    render();
+  }
+
+  async function deleteFromHistory(i){
+    lastDeleted = {item:history[i], index:i};
+    history.splice(i,1);
+    renderHistory();
+    await persistHistory();
+    showToast('Bill removed.', undoDelete);
+  }
+
+  async function undoDelete(){
+    if (!lastDeleted) return;
+    history.splice(lastDeleted.index, 0, lastDeleted.item);
+    lastDeleted = null;
+    renderHistory();
+    await persistHistory();
+  }
+
+  function showToast(msg, onUndo){
+    const t = $('toast');
+    t.innerHTML = '<span>' + msg + '</span><button type="button" id="undoBtn">Undo</button>';
+    t.classList.add('show');
+    clearTimeout(toastTimer);
+    $('undoBtn').onclick = function(){ onUndo(); t.classList.remove('show'); };
+    toastTimer = setTimeout(function(){ t.classList.remove('show'); }, 5000);
+  }
+
+  function setBillType(t){
+    billType = t;
+    $('billTypeRentBtn').classList.toggle('active', t === 'rent');
+    $('billTypeElecBtn').classList.toggle('active', t === 'electricity');
+    $('billTypeCustomBtn').classList.toggle('active', t === 'custom');
+    if (t === 'rent'){
+      $('elecIncluded').checked = false;
+      $('pumpIncluded').checked = false;
+      $('roomIncluded').checked = false;
+      $('rentIncluded').checked = true;
+      $('maintenanceIncluded').checked = true;
+      $('billTitleInput').value = 'Rent Bill';
+    } else if (t === 'electricity'){
+      $('elecIncluded').checked = true;
+      $('rentIncluded').checked = false;
+      $('maintenanceIncluded').checked = false;
+      $('billTitleInput').value = 'Electricity Bill';
+    }
+    render();
+  }
+
+  const BILL_COLORS = {
+    indigo:{hex:'#4F46E5', rgb:'79,70,229'},
+    emerald:{hex:'#059669', rgb:'5,150,105'},
+    amber:{hex:'#D97706', rgb:'217,119,6'},
+    rose:{hex:'#E11D48', rgb:'225,29,72'},
+    slate:{hex:'#334155', rgb:'51,65,85'}
+  };
+  let billAccentColor = 'indigo';
+  function applyBillColor(name){
+    const c = BILL_COLORS[name] || BILL_COLORS.indigo;
+    billAccentColor = BILL_COLORS[name] ? name : 'indigo';
+    document.documentElement.style.setProperty('--bill-accent', c.hex);
+    document.documentElement.style.setProperty('--bill-accent-rgb', c.rgb);
+    document.querySelectorAll('.swatch').forEach(function(b){
+      b.classList.toggle('active', b.dataset.color === billAccentColor);
+    });
+  }
+  document.querySelectorAll('.swatch').forEach(function(btn){
+    btn.addEventListener('click', function(){ applyBillColor(btn.dataset.color); });
+  });
+
+  let billStructure = 'classic';
+  const STRUCTURES = ['classic','modern','minimal','ledger','statement'];
+  function applyBillStructure(name){
+    billStructure = STRUCTURES.indexOf(name) > -1 ? name : 'classic';
+    STRUCTURES.forEach(function(s){
+      $('struct' + s.charAt(0).toUpperCase() + s.slice(1) + 'Btn').classList.toggle('active', billStructure === s);
+    });
+    render();
+  }
+  $('structClassicBtn').addEventListener('click', function(){ applyBillStructure('classic'); });
+  $('structModernBtn').addEventListener('click', function(){ applyBillStructure('modern'); });
+  $('structMinimalBtn').addEventListener('click', function(){ applyBillStructure('minimal'); });
+  $('structLedgerBtn').addEventListener('click', function(){ applyBillStructure('ledger'); });
+  $('structStatementBtn').addEventListener('click', function(){ applyBillStructure('statement'); });
+
+  $('styleMenuBtn').addEventListener('click', function(){
+    const panel = $('styleMenuPanel');
+    const willShow = panel.hasAttribute('hidden');
+    if (willShow) panel.removeAttribute('hidden'); else panel.setAttribute('hidden','');
+    $('styleMenuBtn').setAttribute('aria-expanded', willShow ? 'true' : 'false');
+  });
+
+  $('billTypeRentBtn').addEventListener('click', function(){ setBillType('rent'); });
+  $('billTypeElecBtn').addEventListener('click', function(){ setBillType('electricity'); });
+  $('billTypeCustomBtn').addEventListener('click', function(){ setBillType('custom'); });
+
+  document.querySelectorAll('.live-input').forEach(function(el){
+    el.addEventListener('input', render);
+    el.addEventListener('change', render);
+  });
+
+  $('generateBtn').addEventListener('click', async function(){
+    const data = currentData();
+    const bill = buildBill(data);
+    const snapshot = {id:Date.now(), data:data, total:bill.total, title:bill.title, billType:billType, billAccentColor:billAccentColor, billStructure:billStructure, ts:new Date().toISOString()};
+    history.unshift(snapshot);
+    if (history.length > 25) history.pop();
+    renderHistory();
+    await persistHistory();
+    flashReceipt();
+    $('receiptWrap').scrollIntoView({behavior:'smooth', block:'start'});
+  });
+
+  $('printBtn').addEventListener('click', function(){ window.print(); });
+
+  $('historyList').addEventListener('click', function(e){
+    const loadBtn = e.target.closest('.hist-load');
+    const delBtn = e.target.closest('.hist-del');
+    if (loadBtn) loadFromHistory(parseInt(loadBtn.dataset.i,10));
+    if (delBtn) deleteFromHistory(parseInt(delBtn.dataset.i,10));
+  });
+
+  $('themeToggle').addEventListener('click', function(){
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    document.documentElement.setAttribute('data-theme', isDark ? 'light' : 'dark');
+    $('themeToggle').textContent = isDark ? '🌙' : '☀️';
+  });
+
+  (async function init(){
+    history = await loadHistory();
+    renderHistory();
+    render();
+  })();
+</script>
+</body>
+</html>
