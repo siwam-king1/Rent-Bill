@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rent Bill Generator</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<style>
+:root{
+  --bg:#e3f2fd; --card:#fff; --ink:#333; --muted:#0288d1; --line:#0288d1;
+  --accent:#0288d1; --accent-d:#0277bd; --soft:#e1f5fe; --warn:#c62828;
+  --r:8px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--ink);padding:20px 16px 90px}
+.app{max-width:1020px;margin:0 auto}
+header{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:18px}
+h1{font-size:1.5rem;letter-spacing:-.02em;color:var(--accent)}
+.sub{color:var(--muted);font-size:.9rem}
+.grid{display:grid;grid-template-columns:1fr;gap:16px}
+@media(min-width:900px){.grid{grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr);align-items:start}.preview{position:sticky;top:16px}}
+.card{background:var(--card);border:0;box-shadow:0 2px 10px rgba(0,0,0,.1);border-radius:var(--r);padding:18px;margin-bottom:14px}
+.card h2{font-size:1.02rem;margin-bottom:12px;color:var(--accent)}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.row.one{grid-template-columns:1fr}
+@media(max-width:480px){.row{grid-template-columns:1fr}}
+.f{display:flex;flex-direction:column;gap:4px}
+.f label{font-size:.8rem;color:var(--muted)}
+input[type=text],input[type=number],select{width:100%;padding:11px 12px;font:inherit;color:var(--ink);background:#fff;border:1px solid var(--line);border-radius:10px;transition:border-color .15s,box-shadow .15s;min-height:44px}
+input:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 25%,transparent)}
+.sw{display:flex;align-items:center;justify-content:space-between;gap:12px;cursor:pointer;margin-bottom:0}
+.sw span{font-weight:600;font-size:1.02rem;color:var(--accent)}
+.sw input{appearance:none;width:44px;height:26px;border-radius:99px;background:#b3d9f2;position:relative;cursor:pointer;transition:background .2s;flex:none}
+.sw input::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:transform .2s}
+.sw input:checked{background:var(--accent)}
+.sw input:checked::after{transform:translateX(18px)}
+.sw input:focus-visible{outline:3px solid color-mix(in srgb,var(--accent) 40%,transparent);outline-offset:2px}
+.fold{display:grid;grid-template-rows:0fr;transition:grid-template-rows .25s ease}
+.fold>div{overflow:hidden}
+.fold.open{grid-template-rows:1fr}
+.fold .inner{padding-top:12px;display:grid;gap:10px}
+.fold:not(.open) .inner{visibility:hidden}
+.bill{background:var(--card);border:0;box-shadow:0 2px 10px rgba(0,0,0,.1);border-radius:var(--r);padding:22px}
+.bill h2{font-size:1.2rem;color:var(--accent)}
+.meta{color:var(--muted);font-size:.92rem;margin:4px 0 14px}
+.meta b{color:var(--ink)}
+.calc{background:var(--soft);border-radius:10px;padding:10px 12px;margin-bottom:14px;font:.82rem/1.7 ui-monospace,Consolas,monospace;word-break:break-word}
+.calc div b{font-family:system-ui,sans-serif}
+table{width:100%;border-collapse:collapse}
+td{padding:9px 0;border-bottom:1px solid #b3d9f2}
+td:last-child{text-align:right;font-variant-numeric:tabular-nums}
+tr.neg td:last-child{color:var(--warn)}
+tr.total td{border:0;padding-top:14px;font-size:1.3rem;font-weight:700;color:var(--accent)}
+.bar{position:fixed;left:0;right:0;bottom:0;display:flex;gap:10px;justify-content:center;padding:12px 16px;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(8px);border-top:1px solid var(--line);z-index:5}
+button{font:inherit;font-weight:600;min-height:46px;padding:0 20px;border-radius:10px;border:1.5px solid var(--accent);cursor:pointer;transition:transform .1s,background .15s}
+button:active{transform:scale(.97)}
+.pri{background:var(--accent);color:#fff;flex:1;max-width:260px}
+.pri:hover{background:var(--accent-d)}
+.sec{background:transparent;color:var(--accent)}
+.sec:hover{background:var(--soft)}
+button:focus-visible{outline:3px solid color-mix(in srgb,var(--accent) 40%,transparent);outline-offset:2px}
+.toast{position:fixed;left:50%;bottom:80px;transform:translate(-50%,20px);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:99px;font-size:.9rem;opacity:0;pointer-events:none;transition:.25s;z-index:9}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+
+.nav{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
+.navc{text-align:center;color:var(--accent)}
+.dots{display:flex;gap:6px;justify-content:center;margin-top:4px}
+.dots i{width:8px;height:8px;border-radius:50%;background:#b3d9f2;transition:background .2s,transform .2s;cursor:pointer}
+.dots i.on{background:var(--accent);transform:scale(1.3)}
+button.ic{min-height:40px;width:40px;padding:0;font-size:1.5rem;line-height:1}
+.track{display:flex;gap:14px;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;-webkit-overflow-scrolling:touch;padding:2px}
+.track::-webkit-scrollbar{display:none}
+.slide{flex:0 0 100%;scroll-snap-align:center;min-width:0}
+.form,.preview{min-width:0}
+body{overflow-x:clip}
+th{font-size:.78rem;font-weight:600;text-align:left;padding:9px 12px}
+th:last-child{text-align:right}
+.t-inv,.t-corp,.t-stmt{font-size:.94rem}
+.t-inv{padding:24px 22px}
+.ihead{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;padding-bottom:14px;border-bottom:3px solid var(--accent);margin-bottom:16px}
+.ihead h2{color:var(--ink);font-size:1.15rem}
+.ihead .r{text-align:right;color:var(--accent);font-weight:700;letter-spacing:.06em}
+.ihead .r small{display:block;color:var(--muted);font-weight:400;letter-spacing:0;font-size:.8rem}
+.pty{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px}
+.pty small{display:block;color:var(--muted);font-size:.76rem}
+.pty div:last-child{text-align:right}
+.t-inv th{background:var(--accent);color:#fff}
+.t-inv td{padding:10px 12px}
+.t-inv tr.total td{background:var(--soft);border-top:2px solid var(--accent)}
+.t-corp{border-left:10px solid var(--accent);padding:24px 22px 22px}
+.t-corp h2{font-size:1.5rem;color:var(--ink);letter-spacing:-.01em}
+.t-corp .sub2{color:var(--muted);margin-bottom:16px}
+.t-corp .pty{padding:12px 0;border-top:1px solid #b3d9f2;border-bottom:1px solid #b3d9f2}
+.t-corp th{color:var(--accent);border-bottom:2px solid var(--accent);padding-left:0}
+.t-corp td{padding-left:0;border-bottom:0}
+.t-corp tbody tr:nth-child(even) td{background:var(--soft);padding-left:8px;padding-right:8px}
+.t-corp tr.total td{color:#fff;background:var(--accent);padding:12px 8px;border-radius:0}
+.t-stmt{padding:0;overflow:hidden}
+.sban{background:#0d3c61;color:#fff;padding:20px 22px;display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap}
+.sban h2{color:#fff;font-size:1.1rem}
+.sban small{color:#9fd3f5;display:block}
+.sban .amt{font-size:1.9rem;font-weight:700;text-align:right;font-variant-numeric:tabular-nums}
+.sbd{padding:18px 22px 22px}
+.t-stmt th{color:var(--muted);border-bottom:1px solid #0d3c61;padding-left:0;padding-right:0}
+.t-stmt td{padding-left:0;padding-right:0}
+.t-stmt tr.total td{color:#0d3c61;border-top:2px solid #0d3c61}
+.t-min{text-align:center;padding:26px 22px}
+.t-min .big{font-size:2.4rem;font-weight:700;color:var(--accent);margin:6px 0 2px;font-variant-numeric:tabular-nums}
+.t-min table{text-align:left;margin-top:14px}
+.t-min thead,.t-min tr.total,.t-rec thead{display:none}
+.t-min td{border-bottom:1px solid #e1f5fe}
+.t-rec{font-family:ui-monospace,Consolas,monospace;font-size:.88rem;border-radius:2px;border-top:6px double var(--accent)}
+.t-rec h2{text-align:center;color:var(--ink)}.t-rec .meta{text-align:center;color:var(--ink)}
+.t-rec .calc{background:none;border:1px dashed var(--accent);border-radius:0}
+.t-rec td{border-bottom:1px dashed #90caf9}
+.t-rec tr.total td{border-top:2px dashed var(--accent);color:var(--ink)}
+.tabs{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
+.tab{background:transparent;color:var(--accent);flex:1;min-width:150px}
+.tab:hover{background:var(--soft)}
+.tab[aria-selected=true]{background:var(--accent);color:#fff}
+.doctools{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+.docwrap{background:#fff;box-shadow:0 2px 10px rgba(0,0,0,.1);border-radius:8px;overflow:hidden}
+.doc{width:794px;padding:48px;background:#fff;color:#000;font:11pt/1.08 Calibri,Carlito,"Segoe UI",Arial,sans-serif}
+.doc table{border-collapse:collapse;table-layout:fixed}
+.doc td{border:1px solid #000;padding:0 7.2px;vertical-align:top;text-align:left;font-variant-numeric:normal}
+.doc td.c,.doc td.c p{text-align:center}
+.doc tr.g td{background:#e7e6e6}
+.doc p{margin:0 0 8pt;white-space:pre-wrap;min-height:1.08em;outline:none;word-break:break-word}
+.doc p[data-e]:hover{background:rgba(2,136,209,.07)}
+.doc p[data-e]:focus{background:rgba(2,136,209,.12);box-shadow:0 0 0 1px var(--accent)}
+.doc p.gap{height:25px;margin:0}
+.doc p.sg{margin:0 0 8pt;text-align:center}
+.doc img{display:inline-block;vertical-align:top}
+.doc .lnk{color:#0563c1;text-decoration:underline}
+.doc .ar{font-family:Arial,sans-serif;font-size:10pt}
+.hide{display:none!important}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="app">
+  <nav class="tabs" role="tablist">
+    <button class="tab" id="tab1" role="tab" type="button">Bill 1 · Generator</button>
+    <button class="tab" id="tab2" role="tab" type="button">Bill 2 · Edit and print</button>
+  </nav>
+  <div id="view1">
+  <header>
+    <div><h1>Rent bill generator</h1><p class="sub">Bill updates as you type.</p></div>
+    <button class="sec" id="reset" type="button">Clear all</button>
+  </header>
+
+  <div class="grid">
+    <div class="form">
+      <div class="card">
+        <h2>Tenant</h2>
+        <div class="row">
+          <div class="f"><label for="tenant_name">Tenant name</label><input type="text" id="tenant_name" autocomplete="off"></div>
+          <div class="f"><label for="billing_month">Billing month</label>
+            <select id="billing_month"><option value="">Select month</option></select></div>
+        </div>
+        <div class="row one" style="margin-top:10px"><div class="f"><label for="bill_title">Bill title</label><input type="text" id="bill_title" list="titles" value="Rent Bill" autocomplete="off" placeholder="e.g. Rent Receipt, Due Receipt, Electricity Bill"><datalist id="titles"><option value="Rent Bill"><option value="Rent Receipt"><option value="Due Receipt"><option value="Electricity Bill"><option value="Electricity Receipt"><option value="Maintenance Bill"></datalist></div></div>
+        <div class="row one" style="margin-top:10px"><div class="f"><label for="landlord_name">Landlord or property name (optional)</label><input type="text" id="landlord_name" autocomplete="off"></div></div>
+      </div>
+
+      <div class="card">
+        <h2>Electricity</h2>
+        <div class="row">
+          <div class="f"><label for="elec_prev">Previous reading</label><input type="number" id="elec_prev" inputmode="decimal"></div>
+          <div class="f"><label for="elec_curr">Current reading</label><input type="number" id="elec_curr" inputmode="decimal"></div>
+        </div>
+        <div class="row one" style="margin-top:10px"><div class="f"><label for="elec_unit_charge">Unit charge (₹)</label><input type="number" id="elec_unit_charge" inputmode="decimal"></div></div>
+      </div>
+
+      <div class="card">
+        <label class="sw"><span>Pump charges</span><input type="checkbox" id="include_pump"></label>
+        <div class="fold" id="f_pump"><div><div class="inner">
+          <div class="row">
+            <div class="f"><label for="pump_prev">Previous reading</label><input type="number" id="pump_prev" inputmode="decimal"></div>
+            <div class="f"><label for="pump_curr">Current reading</label><input type="number" id="pump_curr" inputmode="decimal"></div>
+            <div class="f"><label for="pump_unit_charge">Unit charge (₹)</label><input type="number" id="pump_unit_charge" inputmode="decimal"></div>
+            <div class="f"><label for="num_people">People sharing</label><input type="number" id="num_people" inputmode="numeric" min="1"></div>
+          </div>
+        </div></div></div>
+      </div>
+
+      <div class="card">
+        <h2>Rent and adjustments</h2>
+        <div class="row">
+          <div class="f"><label for="rent_amount">Rent (₹)</label><input type="number" id="rent_amount" inputmode="decimal"></div>
+          <div class="f"><label for="maintenance_charge">Maintenance (₹)</label><input type="number" id="maintenance_charge" inputmode="decimal"></div>
+          <div class="f"><label for="prev_due">Previous due (₹)</label><input type="number" id="prev_due" inputmode="decimal" value="0"></div>
+          <div class="f"><label for="prev_advance">Previous advance (₹)</label><input type="number" id="prev_advance" inputmode="decimal" value="0"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <label class="sw"><span>Additional room</span><input type="checkbox" id="include_room"></label>
+        <div class="fold" id="f_room"><div><div class="inner">
+          <div class="f"><label for="room_name">Room name</label><input type="text" id="room_name" autocomplete="off"></div>
+          <div class="row">
+            <div class="f"><label for="room_prev">Previous reading</label><input type="number" id="room_prev" inputmode="decimal"></div>
+            <div class="f"><label for="room_curr">Current reading</label><input type="number" id="room_curr" inputmode="decimal"></div>
+          </div>
+          <div class="f"><label for="room_unit_charge">Unit charge (₹)</label><input type="number" id="room_unit_charge" inputmode="decimal"></div>
+        </div></div></div>
+      </div>
+
+      <div class="card"><label class="sw"><span>Show calculation details on bill</span><input type="checkbox" id="show_calculation" checked></label></div>
+    </div>
+
+    <div class="preview">
+      <div class="nav">
+        <button class="sec ic" id="prev" type="button" aria-label="Previous template">‹</button>
+        <div class="navc"><b id="tname">Classic</b><div class="dots" id="dots"></div></div>
+        <button class="sec ic" id="next" type="button" aria-label="Next template">›</button>
+      </div>
+      <div class="track" id="track"></div>
+    </div>
+  </div>
+  </div>
+  <div id="view2" class="hide">
+    <div class="doctools"><span class="sub">Click any text on the bill to edit it. Layout stays fixed.</span><button class="sec" id="doc_reset" type="button">Restore original</button></div>
+    <div class="docwrap" id="docwrap"><div class="doc" id="doc">
+      <table style="width:691.8px;margin-left:.7px">
+        <colgroup><col style="width:80.67px"><col style="width:256.33px"><col style="width:160.4px"><col style="width:47.8px"><col style="width:44.8px"><col style="width:101.8px"></colgroup>
+        <tr style="height:40.7px"><td colspan="6" class="c">
+          <p data-e style="font-size:12pt">BILL</p><p data-e>KAPILESHWAR CHOURASIA</p><p data-e>RAM BAGAN , SEARSOLE RAJBARI , PIN – 713358</p><p data-e>MOBILE : +919378462324 | Email :- <span class="lnk">siwamking1@gmail.com</span> | Pan :- CUQPC1669H</p>
+        </td></tr>
+        <tr style="height:40.1px"><td colspan="2">
+          <p data-e>BILL TO:</p><p data-e>INNOVATIVE INFRA &amp; MINING SOLUTION LIMITED</p><p data-e style="font-size:9pt">Address: RAM BAGAN , SEARSOLE RAJBARI , PIN – 713358</p>
+        </td><td colspan="4"><p data-e>INVOICE NO :- xxxx</p><p data-e>INVOICE DATE :- xx/xx/xxxx</p></td></tr>
+        <tr class="g" style="height:15px"><td><p data-e>S.NO</p></td><td colspan="2" class="c"><p data-e>SERVICES</p></td><td><p data-e><br></p></td><td><p data-e><br></p></td><td class="c"><p data-e>AMOUNT</p></td></tr>
+        <tr style="height:331.5px"><td class="c"><p data-e>1</p></td><td colspan="2"><p data-e>House Rent for the month of <span class="ar">xxxx </span>- 20xx</p></td><td><p data-e><br></p></td><td><p data-e><br></p></td><td class="c"><p data-e>20,000</p></td></tr>
+        <tr class="g" style="height:12.3px"><td><p data-e><br></p></td><td colspan="2" class="c"><p data-e>TOTAL</p></td><td><p data-e><br></p></td><td><p data-e><br></p></td><td class="c"><p data-e>20,000</p></td></tr>
+        <tr style="height:25.9px"><td><p data-e><br></p></td><td colspan="2"><p data-e><br></p></td><td><p data-e><br></p></td><td><p data-e><br></p></td><td><p data-e><br></p></td></tr>
+      </table>
+      <p class="gap"><br></p>
+      <table style="width:690px;margin-left:3.7px">
+        <colgroup><col style="width:256px"><col style="width:229px"><col style="width:205px"></colgroup>
+        <tr style="height:48px"><td colspan="3"><p data-e style="font-size:9pt">Total Amount (in words) :- Twenty Thousand Rupees</p></td></tr>
+        <tr style="height:126px"><td><p data-e>Bank Details</p><p data-e>Name : Kapileshwar Chourasia</p><p data-e>IFSC Code : HDFC0000692</p><p data-e>Account No.:- 06922560001498</p><p data-e>Bank:- HDFC BANK ,RANIGANJ,WB</p></td>
+        <td><p data-e><br></p></td>
+        <td class="c"><p class="sg"><img src="data:image/png;base64,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" alt="Signature" width="145" height="68"></p><p data-e>Authorised Signatory For<br>KAPILESHWAR CHOURASIA</p></td></tr>
+      </table>
+    </div></div>
+  </div>
+</div>
+
+<div class="bar">
+  <button class="sec" id="print" type="button">Print</button>
+  <button class="pri" id="pdf" type="button">Download PDF</button>
+</div>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+const $ = id => document.getElementById(id);
+const num = id => parseFloat($(id).value) || 0;
+const inr = n => '₹' + n.toFixed(2);
+const KEY = 'rentbill:v2';
+const ids = ['bill_title','landlord_name','tenant_name','billing_month','elec_prev','elec_curr','elec_unit_charge','pump_prev','pump_curr','pump_unit_charge','num_people','rent_amount','prev_due','prev_advance','room_name','room_prev','room_curr','room_unit_charge','maintenance_charge'];
+const checks = ['include_pump','include_room','show_calculation'];
+
+['January','February','March','April','May','June','July','August','September','October','November','December']
+  .forEach(m => $('billing_month').add(new Option(m, m)));
+
+const _n = new Date();
+const TODAY = _n.toLocaleDateString('en-IN', {day:'2-digit', month:'short', year:'numeric'});
+const esc = v => String(v).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const meta = d => `<p class="meta"><b>${d.tenant}</b> · ${d.month}</p>`;
+const parties = d => `<div class="pty"><div><small>Billed to</small><b>${d.tenant}</b></div><div><small>Billing month</small><b>${d.month}</b></div></div>`;
+const TEMPLATES = [
+  ['Invoice', d => `<div class="bill t-inv"><div class="ihead"><div><h2>${d.landlord}</h2><small class="sub">${d.date}</small></div><div class="r">${d.title}</div></div>${parties(d)}${d.calc}${d.table}</div>`],
+  ['Corporate', d => `<div class="bill t-corp"><h2>${d.landlord || d.title}</h2><p class="sub2">${d.title} · ${d.date}</p>${parties(d)}${d.calc}${d.table}</div>`],
+  ['Statement', d => `<div class="bill t-stmt"><div class="sban"><div><h2>${d.title}</h2><small>${d.landlord}</small><small>${d.tenant} · ${d.month}</small><small>${d.date}</small></div><div><small style="text-align:right">Total due</small><div class="amt">${d.total}</div></div></div><div class="sbd">${d.calc}${d.table}</div></div>`],
+  ['Minimal', d => `<div class="bill t-min"><h2 style="color:var(--ink)">${d.title}</h2><p class="meta" style="margin:4px 0 0"><b>${d.tenant}</b> · ${d.month}</p><div class="big">${d.total}</div><p class="meta" style="margin:0">Total due</p>${d.calc ? '<div style="margin-top:14px;text-align:left">' + d.calc + '</div>' : ''}${d.table}</div>`],
+  ['Receipt', d => `<div class="bill t-rec"><h2>${d.title.toUpperCase()}</h2>${meta(d)}${d.calc}${d.table}</div>`]
+];
+const track = $('track'), dots = $('dots');
+let active = 0;
+TEMPLATES.forEach((t, i) => {
+  const sl = document.createElement('div'); sl.className = 'slide';
+  track.appendChild(sl);
+  const dot = document.createElement('i'); dot.onclick = () => go(i); dots.appendChild(dot);
+});
+function go(i) {
+  i = Math.max(0, Math.min(TEMPLATES.length - 1, i));
+  track.scrollTo({ left: track.children[i].offsetLeft - track.offsetLeft, behavior: 'smooth' });
+}
+function setActive(i) {
+  active = i;
+  [...track.children].forEach((c, k) => c.classList.toggle('active', k === i));
+  [...dots.children].forEach((c, k) => c.classList.toggle('on', k === i));
+  $('tname').textContent = TEMPLATES[i][0];
+  $('prev').disabled = i === 0; $('next').disabled = i === TEMPLATES.length - 1;
+  try { localStorage.setItem(KEY + ':tpl', i); } catch (e) {}
+}
+let st;
+track.addEventListener('scroll', () => {
+  clearTimeout(st);
+  st = setTimeout(() => {
+    const i = Math.round(track.scrollLeft / (track.children[0].offsetWidth + 14));
+    if (i !== active) setActive(i);
+  }, 60);
+}, { passive: true });
+$('prev').onclick = () => go(active - 1);
+$('next').onclick = () => go(active + 1);
+function drawBills(d) { TEMPLATES.forEach((t, i) => track.children[i].innerHTML = t[1](d)); }
+
+function render() {
+  const pumpOn = $('include_pump').checked, roomOn = $('include_room').checked;
+  $('f_pump').classList.toggle('open', pumpOn);
+  $('f_room').classList.toggle('open', roomOn);
+
+  const ePrev = num('elec_prev'), eCurr = num('elec_curr'), eRate = num('elec_unit_charge');
+  const people = num('num_people') || 1;
+  const elec = (eCurr - ePrev) * eRate;
+  const pump = (num('pump_curr') - num('pump_prev')) * num('pump_unit_charge') / people;
+  const room = (num('room_curr') - num('room_prev')) * num('room_unit_charge');
+  const rent = num('rent_amount'), due = num('prev_due'), adv = num('prev_advance'), maint = num('maintenance_charge');
+
+  const units = elec + (pumpOn ? pump : 0) + (roomOn ? room : 0);
+  const total = units + rent + due - adv + maint;
+
+  const rows = [
+    ['Unit charges', inr(units)], ['Rent', inr(rent)], ['Previous due', inr(due)],
+    ['Previous advance', '− ' + inr(adv), 'neg'], ['Maintenance', inr(maint)]
+  ];
+  const roomLabel = esc($('room_name').value.trim() || 'Additional room');
+  const lines = [`<div><b>Electricity:</b> (${eCurr} − ${ePrev}) × ${eRate} = ${inr(elec)}</div>`];
+  if (pumpOn) lines.push(`<div><b>Pump:</b> (${num('pump_curr')} − ${num('pump_prev')}) × ${num('pump_unit_charge')} ÷ ${people} = ${inr(pump)}</div>`);
+  if (roomOn) lines.push(`<div><b>${roomLabel}:</b> (${num('room_curr')} − ${num('room_prev')}) × ${num('room_unit_charge')} = ${inr(room)}</div>`);
+  if (maint > 0) lines.push(`<div><b>Maintenance:</b> ${inr(maint)}</div>`);
+  drawBills({
+    landlord: esc($('landlord_name').value.trim() || ''), title: esc($('bill_title').value.trim() || 'Bill'), date: TODAY,
+    tenant: esc($('tenant_name').value.trim() || '—'), month: esc($('billing_month').value || '—'),
+    total: inr(total), rows, calc: $('show_calculation').checked ? `<div class="calc">${lines.join('')}</div>` : '',
+    table: `<table><thead><tr><th>Description</th><th>Amount (₹)</th></tr></thead><tbody>${rows.map(r => `<tr class="${r[2] || ''}"><td>${r[0]}</td><td>${r[1]}</td></tr>`).join('')}</tbody><tfoot><tr class="total"><td>Total</td><td>${inr(total)}</td></tr></tfoot></table>`
+  });
+}
+
+// Debounced save + instant render
+let t;
+function save() {
+  clearTimeout(t);
+  t = setTimeout(() => {
+    try {
+      const d = {};
+      ids.forEach(i => d[i] = $(i).value);
+      checks.forEach(i => d[i] = $(i).checked);
+      localStorage.setItem(KEY, JSON.stringify(d));
+    } catch (e) {}
+  }, 400);
+}
+function load() {
+  try {
+    const d = JSON.parse(localStorage.getItem(KEY) || 'null');
+    if (!d) return;
+    ids.forEach(i => { if (d[i] !== undefined) $(i).value = d[i]; });
+    checks.forEach(i => { if (d[i] !== undefined) $(i).checked = d[i]; });
+  } catch (e) {}
+}
+function toast(msg) {
+  const el = $('toast'); el.textContent = msg; el.classList.add('show');
+  clearTimeout(toast.t); toast.t = setTimeout(() => el.classList.remove('show'), 1800);
+}
+
+document.addEventListener('input', () => { render(); save(); });
+document.addEventListener('change', () => { render(); save(); });
+
+$('reset').onclick = () => {
+  if (!confirm('Clear all fields?')) return;
+  ids.forEach(i => $(i).value = '');
+  $('bill_title').value = 'Rent Bill'; $('prev_due').value = 0; $('prev_advance').value = 0;
+  $('include_pump').checked = false; $('include_room').checked = false; $('show_calculation').checked = true;
+  render(); save(); toast('Cleared');
+};
+$('print').onclick = () => window.print();
+$('pdf').onclick = () => {
+  if (document.body.classList.contains('v2')) return pdfDoc();
+  const name = ($('tenant_name').value.trim() || 'bill').replace(/\s+/g, '_');
+  const month = $('billing_month').value || '';
+  toast('Preparing PDF…');
+  html2pdf().set({
+    margin: 10,
+    filename: `${($('bill_title').value.trim() || 'Bill').replace(/\s+/g, '_')}_${name}${month ? '_' + month : ''}.pdf`,
+    image: { type: 'jpeg', quality: 0.95 },
+    html2canvas: { scale: 2, useCORS: true },
+    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+  }).from(track.children[active].querySelector('.bill')).save().then(() => toast('PDF downloaded'));
+};
+
+load(); render();
+try { let k = +localStorage.getItem(KEY + ':tpl') || 0; if (k >= TEMPLATES.length) k = 0; setActive(k); requestAnimationFrame(() => track.scrollTo({ left: track.children[k].offsetLeft - track.offsetLeft })); } catch (e) { setActive(0); }
+
+(function () {
+  const doc = $('doc'), wrap = $('docwrap'), K2 = 'rentbill:doc2c';
+  const eds = [...doc.querySelectorAll('p[data-e]')];
+  const orig = eds.map(p => p.innerHTML);
+  eds.forEach(p => { p.contentEditable = 'plaintext-only'; if (p.contentEditable !== 'plaintext-only') p.contentEditable = 'true'; p.spellcheck = false; });
+  try {
+    const d = JSON.parse(localStorage.getItem(K2) || 'null');
+    if (Array.isArray(d) && d.length === eds.length) eds.forEach((p, i) => { if (typeof d[i] === 'string') p.innerHTML = d[i]; });
+  } catch (e) {}
+  let t;
+  doc.addEventListener('input', () => {
+    clearTimeout(t);
+    t = setTimeout(() => { try { localStorage.setItem(K2, JSON.stringify(eds.map(p => p.innerHTML))); } catch (e) {} }, 400);
+  });
+  doc.addEventListener('paste', e => {
+    e.preventDefault();
+    document.execCommand('insertText', false, (e.clipboardData || window.clipboardData).getData('text/plain'));
+  });
+  const fit = () => { doc.style.zoom = Math.min(1, wrap.clientWidth / 794); };
+  addEventListener('resize', fit);
+  function show(n) {
+    document.body.classList.toggle('v2', n === 2);
+    $('view1').classList.toggle('hide', n === 2);
+    $('view2').classList.toggle('hide', n !== 2);
+    $('tab1').setAttribute('aria-selected', n === 1);
+    $('tab2').setAttribute('aria-selected', n === 2);
+    if (n === 2) fit();
+    try { localStorage.setItem('rentbill:tab', n); } catch (e) {}
+  }
+  $('tab1').onclick = () => show(1);
+  $('tab2').onclick = () => show(2);
+  $('doc_reset').onclick = () => {
+    if (!confirm('Restore the original bill text?')) return;
+    eds.forEach((p, i) => p.innerHTML = orig[i]);
+    try { localStorage.removeItem(K2); } catch (e) {}
+    toast('Original restored');
+  };
+  window.pdfDoc = () => {
+    toast('Preparing PDF…');
+    const z = doc.style.zoom; doc.style.zoom = 1;
+    const done = () => { doc.style.zoom = z; };
+    html2pdf().set({
+      margin: 0, filename: 'Bill_2.pdf', image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2, useCORS: true, windowWidth: 794 },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    }).from(doc).save().then(() => { done(); toast('PDF downloaded'); }).catch(done);
+  };
+  let n = 1; try { n = +localStorage.getItem('rentbill:tab') || 1; } catch (e) {}
+  show(n === 2 ? 2 : 1);
+})();
+</script>
+<style media="print">
+  @page{size:A4;margin:0}
+  .tabs,.doctools{display:none!important}body:not(.v2){padding:12mm!important}
+  body.v2 .docwrap{box-shadow:none;border-radius:0;overflow:visible}body.v2 .doc{width:210mm;zoom:1!important;padding:12.7mm}body.v2 .doc p[data-e]:hover{background:none}
+  .nav,.slide:not(.active){display:none!important}.track{display:block;overflow:visible}.bill{box-shadow:none!important}
+  body{background:#fff;padding:0}.form,header,.bar,.toast{display:none!important}.grid{display:block}.preview{position:static}
+</style>
+</body>
+</html>
